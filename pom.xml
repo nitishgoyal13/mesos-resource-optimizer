@@ -8,10 +8,7 @@
     <artifactId>thread-pool</artifactId>
     <packaging>pom</packaging>
     <version>1.1-SNAPSHOT</version>
-    <modules>
-        <module>Thread Pool Optimizer</module>
-    </modules>
-
+   
     <name>Thread Pool Optimizer</name>
     <description>
         Manages the thread pool of various services
