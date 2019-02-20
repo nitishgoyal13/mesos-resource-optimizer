@@ -5,7 +5,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,25 +39,18 @@ public class Service {
                 return null;
             }
         } catch (Exception e) {
-            logger.error("Error in Http get: " + e);
+            logger.error("Error in Http get: " + e.getMessage(), e);
             return null;
         }
-
         String data = EntityUtils.toString(response.getEntity());
-        JSONObject jsonObject = new JSONObject(data);
-        JSONArray metricsJSONArray =
-                ((JSONArray)
-                        ((JSONObject)
-                                ((JSONArray)
-                                        ((JSONObject)
-                                                ((JSONArray) jsonObject.get("results")
-                                                ).get(0)
-                                        ).get("series")
-                                ).get(0)
-                        ).get("values"));
+        JSONArray serviceJSONArray = OptimizerUtils.getValuesFromMeasurementData(data);
+        if(serviceJSONArray == null) {
+            logger.error("Error in getting value from data: " + data);
+            return null;
+        }
         Pattern pattern = Pattern.compile(SERVICE_LIST_PATTERN);
-        for(int i = 0; i < metricsJSONArray.length(); i++) {
-            String metrics = ((JSONArray) metricsJSONArray.get(i)).get(0).toString();
+        for(int i = 0; i < serviceJSONArray.length(); i++) {
+            String metrics = ((JSONArray) serviceJSONArray.get(i)).get(0).toString();
             Matcher matcher = pattern.matcher(metrics);
             if(matcher.find()) {
                 services.add(matcher.group(1));

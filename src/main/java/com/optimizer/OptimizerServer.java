@@ -1,6 +1,7 @@
 package com.optimizer;
 
 import com.optimizer.config.OptimizerConfig;
+import com.optimizer.hystrixthreadpool.HystrixThreadPoolService;
 import com.optimizer.hystrixthreadpool.Service;
 import io.dropwizard.Application;
 import io.dropwizard.riemann.RiemannBundle;
@@ -31,5 +32,6 @@ public class OptimizerServer extends Application<OptimizerConfig> {
     public void run(OptimizerConfig configuration, Environment environment) throws Exception {
         HttpClient httpClient = HttpClientBuilder.create().build();
         Service service = new Service(httpClient);
+        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(httpClient, service);
     }
 }

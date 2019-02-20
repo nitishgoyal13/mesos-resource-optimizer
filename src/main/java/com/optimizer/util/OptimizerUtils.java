@@ -1,8 +1,11 @@
 package com.optimizer.util;
 
+import io.swagger.util.Json;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -25,5 +28,25 @@ public class OptimizerUtils {
         HttpGet request = new HttpGet(url);
         GRAFANA_HEADERS.forEach(request::addHeader);
         return client.execute(request);
+    }
+
+    public static JSONArray getValuesFromMeasurementData(String data) {
+        JSONObject jsonObject = new JSONObject(data);
+        if(jsonObject.has("results") &&
+                ((JSONArray) jsonObject.get("results")).length() > 0 &&
+                ((JSONObject) ((JSONArray) jsonObject.get("results")).get(0)).has("series") &&
+                ((JSONArray) ((JSONObject) ((JSONArray) jsonObject.get("results")).get(0)).get("series")).length() > 0 &&
+                ((JSONObject) ((JSONArray) ((JSONObject) ((JSONArray) jsonObject.get("results")).get(0)).get("series")).get(0)).has("values")) {
+            return ((JSONArray)
+                    ((JSONObject)
+                            ((JSONArray)
+                                    ((JSONObject)
+                                            ((JSONArray) jsonObject.get("results")
+                                            ).get(0)
+                                    ).get("series")
+                            ).get(0)
+                    ).get("values"));
+        }
+        return null;
     }
 }
