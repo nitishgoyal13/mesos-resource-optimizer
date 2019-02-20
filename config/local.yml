@@ -1,0 +1,7 @@
+riemann:
+  host: riemann-stage.phonepe.int
+  port: 5555
+  prefix: phonepe.local.optimizer
+  pollingInterval: 30
+  tags:
+    - optimizer
