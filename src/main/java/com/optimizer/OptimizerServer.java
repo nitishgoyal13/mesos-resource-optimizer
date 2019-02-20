@@ -31,6 +31,5 @@ public class OptimizerServer extends Application<OptimizerConfig> {
     public void run(OptimizerConfig configuration, Environment environment) throws Exception {
         HttpClient httpClient = HttpClientBuilder.create().build();
         Service service = new Service(httpClient);
-        service.getAllServices();
     }
 }

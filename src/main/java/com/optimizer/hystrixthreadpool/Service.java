@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class Service {
     private static final Logger logger = LoggerFactory.getLogger(Service.class.getSimpleName());
     private static final String SERVICE_LIST = "SHOW MEASUREMENTS with measurement = /phonepe.prod.*.jvm.threads.count/";
-    private static final String SERVICE_LIST_PATTERN = "phonepe\\.prod\\.(.*)\\.jvm\\.threads\\.count";
+    private static final String SERVICE_LIST_PATTERN = "phonepe.prod.(.*).jvm.threads.count";
 
     private HttpClient client;
 
@@ -58,9 +58,14 @@ public class Service {
                         ).get("values"));
         Pattern pattern = Pattern.compile(SERVICE_LIST_PATTERN);
         for(int i = 0; i < metricsJSONArray.length(); i++) {
-            String metrics = ((JSONArray) metricsJSONArray.get(0)).get(0).toString();
+            String metrics = ((JSONArray) metricsJSONArray.get(i)).get(0).toString();
             Matcher matcher = pattern.matcher(metrics);
+            if(matcher.find()) {
+                services.add(matcher.group(1));
+            } else {
+                logger.error("Match not found for: " + metrics);
+            }
         }
-        return null;
+        return services;
     }
 }
