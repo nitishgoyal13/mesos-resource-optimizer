@@ -30,49 +30,63 @@ public class HystrixThreadPoolService {
         this.service = service;
     }
 
-    private List<String> getHystrixPoolList() throws Exception {
-        List<String> poolNames = new ArrayList<>();
+    public void handleHystrixPools() {
         List<String> services;
         try {
             services = service.getAllServices();
             if(services == null) {
                 logger.error("Error in getting list of services. Got services = null");
-                return null;
+                return;
             }
         } catch (Exception e) {
             logger.error("Error in getting list of services: " + e.getMessage(), e);
-            return null;
+            return;
         }
-        for(String service : CollectionUtils.nullAndEmptySafeValueList(services)) {
-            String hystrixPoolList = String.format(HYSTRIX_POOL_LIST, service);
-            String query = String.format("%s;", hystrixPoolList);
-            HttpResponse response;
+        for(String serviceName : CollectionUtils.nullAndEmptySafeValueList(services)) {
+            List<String> hystrixPools;
             try {
-                response = OptimizerUtils.executeGetRequest(client, query);
-                int status = response.getStatusLine().getStatusCode();
-                if (status < 200 || status >= 300) {
-                    logger.error("Error in Http get, Status Code: " + response.getStatusLine().getStatusCode() + " received Response: " + response);
-                    return null;
+                hystrixPools = getHystrixPoolList(serviceName);
+                if(hystrixPools == null) {
+                    logger.error("Error in getting hystrix pool list. Got hystrixPools = null");
+                    return;
                 }
             } catch (Exception e) {
-                logger.error("Error in Http get: " + e.getMessage(), e);
+                logger.error("Error in getting hystrix pool list: " + e.getMessage(), e);
+                return;
+            }
+        }
+    }
+
+    private List<String> getHystrixPoolList(String serviceName) throws Exception {
+        List<String> poolNames = new ArrayList<>();
+        String hystrixPoolList = String.format(HYSTRIX_POOL_LIST, serviceName);
+        String query = String.format("%s;", hystrixPoolList);
+        HttpResponse response;
+        try {
+            response = OptimizerUtils.executeGetRequest(client, query);
+            int status = response.getStatusLine().getStatusCode();
+            if (status < 200 || status >= 300) {
+                logger.error("Error in Http get, Status Code: " + response.getStatusLine().getStatusCode() + " received Response: " + response);
                 return null;
             }
-            String data = EntityUtils.toString(response.getEntity());
-            JSONArray poolJSONArray = OptimizerUtils.getValuesFromMeasurementData(data);
-            if(poolJSONArray == null) {
-                logger.error("Error in getting value from data: " + data);
-                return null;
-            }
-            Pattern pattern = Pattern.compile(HYSTRIX_POOL_NAME_PATTERN);
-            for(int i = 0; i < poolJSONArray.length(); i++) {
-                String metrics = ((JSONArray) poolJSONArray.get(i)).get(0).toString();
-                Matcher matcher = pattern.matcher(metrics);
-                if(matcher.find()) {
-                    poolNames.add(matcher.group(2));
-                } else {
-                    logger.error("Match not found for: " + metrics);
-                }
+        } catch (Exception e) {
+            logger.error("Error in Http get: " + e.getMessage(), e);
+            return null;
+        }
+        String data = EntityUtils.toString(response.getEntity());
+        JSONArray poolJSONArray = OptimizerUtils.getValuesFromMeasurementData(data);
+        if(poolJSONArray == null) {
+            logger.error("Error in getting value from data: " + data);
+            return null;
+        }
+        Pattern pattern = Pattern.compile(HYSTRIX_POOL_NAME_PATTERN);
+        for(int i = 0; i < poolJSONArray.length(); i++) {
+            String metrics = ((JSONArray) poolJSONArray.get(i)).get(0).toString();
+            Matcher matcher = pattern.matcher(metrics);
+            if(matcher.find()) {
+                poolNames.add(matcher.group(2));
+            } else {
+                logger.error("Match not found for: " + metrics);
             }
         }
         return poolNames;
