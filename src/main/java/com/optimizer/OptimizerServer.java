@@ -33,5 +33,6 @@ public class OptimizerServer extends Application<OptimizerConfig> {
         HttpClient httpClient = HttpClientBuilder.create().build();
         Service service = new Service(httpClient);
         HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(httpClient, service);
+        hystrixThreadPoolService.handleHystrixPools();
     }
 }
