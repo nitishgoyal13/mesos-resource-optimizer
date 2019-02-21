@@ -1,8 +1,8 @@
 package com.optimizer;
 
 import com.optimizer.config.OptimizerConfig;
-import com.optimizer.hystrixthreadpool.HystrixThreadPoolService;
-import com.optimizer.hystrixthreadpool.Service;
+import com.optimizer.threadpool.HystrixThreadPoolService;
+import com.optimizer.threadpool.Service;
 import io.dropwizard.Application;
 import io.dropwizard.riemann.RiemannBundle;
 import io.dropwizard.riemann.RiemannConfig;
