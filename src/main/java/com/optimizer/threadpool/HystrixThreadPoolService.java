@@ -1,7 +1,6 @@
 package com.optimizer.threadpool;
 
 import com.collections.CollectionUtils;
-import com.google.common.collect.Lists;
 import com.optimizer.util.OptimizerUtils;
 import lombok.Builder;
 import org.apache.http.HttpResponse;
@@ -18,6 +17,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.optimizer.util.OptimizerUtils.*;
+
 /***
  Created by mudit.g on Feb, 2019
  ***/
@@ -31,10 +32,12 @@ public class HystrixThreadPoolService {
 
     private HttpClient client;
     private Service service;
+    private GrafanaService grafanaService;
 
-    public HystrixThreadPoolService(HttpClient client, Service service) {
+    public HystrixThreadPoolService(HttpClient client, Service service, GrafanaService grafanaService) {
         this.client = client;
         this.service = service;
+        this.grafanaService = grafanaService;
     }
 
     public void handleHystrixPools() {
@@ -42,7 +45,7 @@ public class HystrixThreadPoolService {
         try {
             services = service.getAllServices();
             if(CollectionUtils.isEmpty(services)) {
-                logger.error("Error in getting list of services. Got services = null");
+                logger.error("Error in getting list of services. Got services = []");
                 return;
             }
         } catch (Exception e) {
@@ -53,8 +56,8 @@ public class HystrixThreadPoolService {
             List<String> hystrixPools;
             try {
                 hystrixPools = getHystrixPoolList(serviceName);
-                if(hystrixPools == null) {
-                    logger.error("Error in getting hystrix pool list for Service: " + serviceName + ". Got hystrixPools = null");
+                if(CollectionUtils.isEmpty(hystrixPools)) {
+                    logger.error("Error in getting hystrix pool list for Service: " + serviceName + ". Got hystrixPools = []");
                     continue;
                 }
             } catch (Exception e) {
@@ -63,13 +66,13 @@ public class HystrixThreadPoolService {
                 continue;
             }
             List<Integer> poolsCore = hystrixPoolsCore(serviceName, hystrixPools);
-            if(poolsCore == null) {
-                logger.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = null");
+            if(CollectionUtils.isEmpty(poolsCore)) {
+                logger.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
                 continue;
             }
             List<Integer> poolsUsage = hystrixPoolsUsage(serviceName, hystrixPools);
-            if(poolsUsage == null) {
-                logger.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = null");
+            if(CollectionUtils.isEmpty(poolsUsage)) {
+                logger.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = []");
                 continue;
             }
             String pool;
@@ -106,20 +109,16 @@ public class HystrixThreadPoolService {
             String poolCoreQuery = String.format(POOL_CORE_QUERY, serviceName, hystrixPool);
             queries.add(poolCoreQuery);
         }
-        List<String> grafanaResponse;
+        List<Integer> responses;
         try {
-            grafanaResponse = runGrafanaQueries(queries);
-            if(grafanaResponse == null) {
-                logger.error("Error in getting pool core grafana response. Got grafanaResponse = null");
-                return null;
+            responses = executeGrafanaQueries(queries);
+            if(CollectionUtils.isEmpty(responses)) {
+                logger.error("Error in getting pool core grafana response. Got grafanaResponse = []");
+                return Collections.emptyList();
             }
         } catch (Exception e) {
             logger.error("Error in running pool core grafana queries: " + e.getMessage(), e);
-            return null;
-        }
-        List<Integer> responses = new ArrayList<>();
-        for(String response : CollectionUtils.nullAndEmptySafeValueList(grafanaResponse)) {
-            responses.add(getValueFromGrafanaResponse(response));
+            return Collections.emptyList();
         }
         return responses;
     }
@@ -127,69 +126,51 @@ public class HystrixThreadPoolService {
     private List<Integer> hystrixPoolsUsage(String serviceName, List<String> hystrixPools) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
-            //TODO What's this 99. It should be a variable. No one else would ever understand that this is percentile
-            String poolUsageQuery = String.format(POOL_USAGE_QUERY, 99, serviceName, hystrixPool);
+            String poolUsageQuery = String.format(POOL_USAGE_QUERY, PERCENTILE, serviceName, hystrixPool);
             queries.add(poolUsageQuery);
         }
-        List<String> grafanaResponse;
+        List<Integer> responses;
         try {
-            grafanaResponse = runGrafanaQueries(queries);
-            if(grafanaResponse == null) {
-                logger.error("Error in getting pool core grafana response. Got grafanaResponse = null");
-                return null;
+            responses = executeGrafanaQueries(queries);
+            if(CollectionUtils.isEmpty(responses)) {
+                logger.error("Error in getting pool core grafana response. Got grafanaResponse = []");
+                return Collections.emptyList();
             }
         } catch (Exception e) {
             logger.error("Error in running pool core grafana queries: " + e.getMessage(), e);
-            return null;
-        }
-        List<Integer> responses = new ArrayList<>();
-        for(String response : CollectionUtils.nullAndEmptySafeValueList(grafanaResponse)) {
-            responses.add(getValueFromGrafanaResponse(response));
+            return Collections.emptyList();
         }
         return responses;
     }
 
     private int getValueFromGrafanaResponse(String response) {
         JSONObject jsonObject = new JSONObject(response);
-        if(jsonObject.has("series") &&
-                ((JSONArray) jsonObject.get("series")).length() > 0 &&
-                ((JSONObject) ((JSONArray) jsonObject.get("series")).get(0)).has("values") &&
-                ((JSONArray) ((JSONObject) ((JSONArray) jsonObject.get("series")).get(0)).get("values")).length() > 0 &&
-                ((JSONArray) ((JSONArray) ((JSONObject) ((JSONArray) jsonObject.get("series")).get(0)).get("values")).get(0)).length() > 1) {
-                return (int) ((JSONArray)
-                                ((JSONArray)
-                                        ((JSONObject)
-                                                ((JSONArray) jsonObject.get("series")
-                                                ).get(0)
-                                        ).get("values")
-                                ).get(0)
-                        ).get(1);
+        JSONArray seriesJSONArray = getArrayFromJSONObject(jsonObject, SERIES);
+        JSONObject seriesJSONObject = getObjectFromJSONArray(seriesJSONArray, INDEX_ZERO);
+        JSONArray valuesJSONArray = getArrayFromJSONObject(seriesJSONObject, VALUES);
+        valuesJSONArray = getArrayFromJSONArray(valuesJSONArray, INDEX_ZERO);
+        if(valuesJSONArray != null && valuesJSONArray.length() > 1) {
+            return (int) valuesJSONArray.get(INDEX_ONE);
         }
-        return -1;
+        return NULL_VALUE;
     }
 
-    //TODO It should be a service and should return the response only. Calling service should parse the response and extract values
-    private List<String> runGrafanaQueries(List<String> queries) throws Exception {
-        List<String> results = new ArrayList<>();
-        for(List<String> queryChunk : Lists.partition(queries, 20)) {
-            String query = String.join(";", queryChunk);
-            query = String.format("%s;", query);
-            HttpResponse response;
-            try {
-                response = OptimizerUtils.executeGetRequest(client, query);
-                int status = response.getStatusLine().getStatusCode();
-                if (status < 200 || status >= 300) {
-                    logger.error("Error in Http get, Status Code: " + response.getStatusLine().getStatusCode() + " received Response: " + response);
-                    return null;
-                }
-            } catch (Exception e) {
-                logger.error("Error in Http get: " + e.getMessage(), e);
+    private List<Integer> executeGrafanaQueries(List<String> queries) throws Exception {
+        List<Integer> results = new ArrayList<>();
+        List<HttpResponse> httpResponses = grafanaService.runGrafanaQueries(queries);
+        if(httpResponses == null || CollectionUtils.isEmpty(httpResponses)) {
+            return Collections.emptyList();
+        }
+        for(HttpResponse httpResponse : CollectionUtils.nullAndEmptySafeValueList(httpResponses)) {
+            int status = httpResponse.getStatusLine().getStatusCode();
+            if (status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
+                logger.error("Error in Http get, Status Code: " + httpResponse.getStatusLine().getStatusCode() + " received Response: " + httpResponse);
                 return Collections.emptyList();
             }
-            String data = EntityUtils.toString(response.getEntity());
+            String data = EntityUtils.toString(httpResponse.getEntity());
             JSONObject jsonObject = new JSONObject(data);
-            if(jsonObject.has("results")) {
-                ((JSONArray) jsonObject.get("results")).forEach(e -> results.add(e.toString()));
+            if(jsonObject.has(RESULTS)) {
+                ((JSONArray) jsonObject.get(RESULTS)).forEach(e -> results.add(getValueFromGrafanaResponse(e.toString())));
             }
         }
         return results;
@@ -198,24 +179,24 @@ public class HystrixThreadPoolService {
     private List<String> getHystrixPoolList(String serviceName) throws Exception {
         List<String> poolNames = new ArrayList<>();
         String hystrixPoolList = String.format(HYSTRIX_POOL_LIST, serviceName);
-        String query = String.format("%s;", hystrixPoolList);
+        String query = String.format(QUERY, hystrixPoolList);
         HttpResponse response;
         try {
             response = OptimizerUtils.executeGetRequest(client, query);
             int status = response.getStatusLine().getStatusCode();
-            if (status < 200 || status >= 300) {
+            if (status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
                 logger.error("Error in Http get, Status Code: " + response.getStatusLine().getStatusCode() + " received Response: " + response);
-                return null;
+                return Collections.emptyList();
             }
         } catch (Exception e) {
             logger.error("Error in Http get: " + e.getMessage(), e);
-            return null;
+            return Collections.emptyList();
         }
         String data = EntityUtils.toString(response.getEntity());
-        JSONArray poolJSONArray = OptimizerUtils.getValuesFromMeasurementData(data);
+        JSONArray poolJSONArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
         if(poolJSONArray == null) {
             logger.error("Error in getting value from data: " + data);
-            return null;
+            return Collections.emptyList();
         }
         //TODO Pool name might not match with service name. Either we need to introduce nomenclature for pool naming
         Pattern pattern = Pattern.compile(HYSTRIX_POOL_NAME_PATTERN);

@@ -1,6 +1,7 @@
 package com.optimizer;
 
 import com.optimizer.config.OptimizerConfig;
+import com.optimizer.threadpool.GrafanaService;
 import com.optimizer.threadpool.HystrixThreadPoolService;
 import com.optimizer.threadpool.Service;
 import io.dropwizard.Application;
@@ -32,7 +33,8 @@ public class OptimizerServer extends Application<OptimizerConfig> {
     public void run(OptimizerConfig configuration, Environment environment) throws Exception {
         HttpClient httpClient = HttpClientBuilder.create().build();
         Service service = new Service(httpClient);
-        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(httpClient, service);
+        GrafanaService grafanaService = new GrafanaService(httpClient);
+        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(httpClient, service, grafanaService);
         hystrixThreadPoolService.handleHystrixPools();
     }
 }

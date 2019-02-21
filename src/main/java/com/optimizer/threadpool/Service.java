@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.optimizer.util.OptimizerUtils.QUERY;
+import static com.optimizer.util.OptimizerUtils.STATUS_OK_RANGE_END;
+import static com.optimizer.util.OptimizerUtils.STATUS_OK_RANGE_START;
+
 /***
  Created by mudit.g on Feb, 2019
  ***/
@@ -30,21 +34,21 @@ public class Service {
 
     public List<String> getAllServices() throws Exception {
         List<String> services = new ArrayList<>();
-        String query = String.format("%s;", SERVICE_LIST);
+        String query = String.format(QUERY, SERVICE_LIST);
         HttpResponse response;
         try {
             response = OptimizerUtils.executeGetRequest(client, query);
             int status = response.getStatusLine().getStatusCode();
-            if (status < 200 || status >= 300) {
+            if (status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
                 logger.error("Error in Http get, Status Code: " + response.getStatusLine().getStatusCode() + " received Response: " + response);
                 return Collections.emptyList();
             }
         } catch (Exception e) {
             logger.error("Error in Http get: " + e.getMessage(), e);
-            return null;
+            return Collections.emptyList();
         }
         String data = EntityUtils.toString(response.getEntity());
-        JSONArray serviceJSONArray = OptimizerUtils.getValuesFromMeasurementData(data);
+        JSONArray serviceJSONArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
         if(serviceJSONArray == null) {
             logger.error("Error in getting value from data: " + data);
             return Collections.emptyList();
