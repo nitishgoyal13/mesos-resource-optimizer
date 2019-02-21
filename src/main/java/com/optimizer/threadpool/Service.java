@@ -1,4 +1,4 @@
-package com.optimizer.hystrixthreadpool;
+package com.optimizer.threadpool;
 
 import com.optimizer.util.OptimizerUtils;
 import org.apache.http.HttpResponse;
@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,7 +37,7 @@ public class Service {
             int status = response.getStatusLine().getStatusCode();
             if (status < 200 || status >= 300) {
                 logger.error("Error in Http get, Status Code: " + response.getStatusLine().getStatusCode() + " received Response: " + response);
-                return null;
+                return Collections.emptyList();
             }
         } catch (Exception e) {
             logger.error("Error in Http get: " + e.getMessage(), e);
@@ -46,7 +47,7 @@ public class Service {
         JSONArray serviceJSONArray = OptimizerUtils.getValuesFromMeasurementData(data);
         if(serviceJSONArray == null) {
             logger.error("Error in getting value from data: " + data);
-            return null;
+            return Collections.emptyList();
         }
         Pattern pattern = Pattern.compile(SERVICE_LIST_PATTERN);
         for(int i = 0; i < serviceJSONArray.length(); i++) {

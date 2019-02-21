@@ -1,4 +1,4 @@
-package com.optimizer.hystrixthreadpool;
+package com.optimizer.threadpool;
 
 import com.collections.CollectionUtils;
 import com.google.common.collect.Lists;
@@ -38,7 +38,7 @@ public class HystrixThreadPoolService {
         List<String> services;
         try {
             services = service.getAllServices();
-            if(services == null) {
+            if(CollectionUtils.isEmpty(services)) {
                 logger.error("Error in getting list of services. Got services = null");
                 return;
             }

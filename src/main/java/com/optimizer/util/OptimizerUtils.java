@@ -15,8 +15,10 @@ import java.util.Map;
  Created by nitish.goyal on 18/02/19
  ***/
 public class OptimizerUtils {
+
     private static final String URL_TEMPLATE = "http://prd-grafana001.phonepe.nm1/api/datasources/proxy/1/query?db=riemann_metrics&q=%s";
     private static final String ENCODING = "UTF-8";
+    //TODO Need to change to api-group thread pools. You will extract the pools and service name from there
     private static Map<String, String> GRAFANA_HEADERS = new HashMap<String, String>() {{
         put("Referer", "http://prd-grafana001.phonepe.nm1/dashboard/db/api-hystrix");
         put("Cookie", "grafana_user=admin; grafana_sess=cd9ad618a07791d8; grafana_remember=97431358d8af8b6e873e9337dd3fc797f0feb0aac63aebf9");
@@ -32,6 +34,8 @@ public class OptimizerUtils {
 
     public static JSONArray getValuesFromMeasurementData(String data) {
         JSONObject jsonObject = new JSONObject(data);
+        //TODO Get the results and store in variable
+        //It would increase the readability. This below code becomes difficult to debug if any error comes
         if(jsonObject.has("results") &&
                 ((JSONArray) jsonObject.get("results")).length() > 0 &&
                 ((JSONObject) ((JSONArray) jsonObject.get("results")).get(0)).has("series") &&
