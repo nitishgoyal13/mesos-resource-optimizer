@@ -3,6 +3,7 @@ package com.optimizer.threadpool;
 import com.collections.CollectionUtils;
 import com.google.common.collect.Lists;
 import com.optimizer.util.OptimizerUtils;
+import lombok.Builder;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,6 +21,7 @@ import java.util.regex.Pattern;
 /***
  Created by mudit.g on Feb, 2019
  ***/
+@Builder
 public class HystrixThreadPoolService {
     private static final Logger logger = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
     private static final String HYSTRIX_POOL_LIST = "SHOW MEASUREMENTS with measurement = /phonepe.prod.%s.HystrixThreadPool.*.propertyValue_corePoolSize/";
@@ -124,6 +127,7 @@ public class HystrixThreadPoolService {
     private List<Integer> hystrixPoolsUsage(String serviceName, List<String> hystrixPools) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
+            //TODO What's this 99. It should be a variable. No one else would ever understand that this is percentile
             String poolUsageQuery = String.format(POOL_USAGE_QUERY, 99, serviceName, hystrixPool);
             queries.add(poolUsageQuery);
         }
@@ -164,6 +168,7 @@ public class HystrixThreadPoolService {
         return -1;
     }
 
+    //TODO It should be a service and should return the response only. Calling service should parse the response and extract values
     private List<String> runGrafanaQueries(List<String> queries) throws Exception {
         List<String> results = new ArrayList<>();
         for(List<String> queryChunk : Lists.partition(queries, 20)) {
@@ -179,7 +184,7 @@ public class HystrixThreadPoolService {
                 }
             } catch (Exception e) {
                 logger.error("Error in Http get: " + e.getMessage(), e);
-                return null;
+                return Collections.emptyList();
             }
             String data = EntityUtils.toString(response.getEntity());
             JSONObject jsonObject = new JSONObject(data);
@@ -212,6 +217,7 @@ public class HystrixThreadPoolService {
             logger.error("Error in getting value from data: " + data);
             return null;
         }
+        //TODO Pool name might not match with service name. Either we need to introduce nomenclature for pool naming
         Pattern pattern = Pattern.compile(HYSTRIX_POOL_NAME_PATTERN);
         for(int i = 0; i < poolJSONArray.length(); i++) {
             String metrics = ((JSONArray) poolJSONArray.get(i)).get(0).toString();
