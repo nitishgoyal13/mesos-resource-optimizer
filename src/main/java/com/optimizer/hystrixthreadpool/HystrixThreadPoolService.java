@@ -51,15 +51,49 @@ public class HystrixThreadPoolService {
             try {
                 hystrixPools = getHystrixPoolList(serviceName);
                 if(hystrixPools == null) {
-                    logger.error("Error in getting hystrix pool list. Got hystrixPools = null");
-                    break;
+                    logger.error("Error in getting hystrix pool list for Service: " + serviceName + ". Got hystrixPools = null");
+                    continue;
                 }
             } catch (Exception e) {
-                logger.error("Error in getting hystrix pool list: " + e.getMessage(), e);
-                break;
+                logger.error("Error in getting hystrix pool list for Service: " + serviceName +
+                        " Error Message: " + e.getMessage(), e);
+                continue;
             }
             List<Integer> poolsCore = hystrixPoolsCore(serviceName, hystrixPools);
+            if(poolsCore == null) {
+                logger.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = null");
+                continue;
+            }
             List<Integer> poolsUsage = hystrixPoolsUsage(serviceName, hystrixPools);
+            if(poolsUsage == null) {
+                logger.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = null");
+                continue;
+            }
+            String pool;
+            int poolCore;
+            int poolUsage;
+            int totalPoolCore = 0;
+            int reduceBy;
+            int canBeFreed = 0;
+            for(int poolCount = 0; poolCount < hystrixPools.size(); poolCount++) {
+                pool = hystrixPools.get(0);
+                poolCore = poolsCore.get(0);
+                poolUsage = poolsUsage.get(0);
+                if(poolCore <= 0 || poolUsage <= 0) {
+                    continue;
+                }
+                totalPoolCore += poolCore;
+                if(poolCore - poolUsage > 0) {
+                    reduceBy = poolCore - poolUsage;
+                } else {
+                    reduceBy = 0;
+                }
+                canBeFreed += reduceBy;
+//                logger.info(String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s",
+//                        serviceName, pool, poolCore, poolUsage, reduceBy));
+            }
+            logger.info(String.format("Service: %s Type: HYSTRIX Total: %s Free: %s",
+                    serviceName, totalPoolCore, canBeFreed));
         }
     }
 
@@ -74,6 +108,7 @@ public class HystrixThreadPoolService {
             grafanaResponse = runGrafanaQueries(queries);
             if(grafanaResponse == null) {
                 logger.error("Error in getting pool core grafana response. Got grafanaResponse = null");
+                return null;
             }
         } catch (Exception e) {
             logger.error("Error in running pool core grafana queries: " + e.getMessage(), e);
@@ -97,6 +132,7 @@ public class HystrixThreadPoolService {
             grafanaResponse = runGrafanaQueries(queries);
             if(grafanaResponse == null) {
                 logger.error("Error in getting pool core grafana response. Got grafanaResponse = null");
+                return null;
             }
         } catch (Exception e) {
             logger.error("Error in running pool core grafana queries: " + e.getMessage(), e);
