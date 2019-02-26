@@ -1,7 +1,6 @@
 package com.optimizer.threadpool;
 
 import com.collections.CollectionUtils;
-import com.optimizer.util.OptimizerUtils;
 import lombok.Builder;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -25,10 +24,21 @@ import static com.optimizer.util.OptimizerUtils.*;
 @Builder
 public class HystrixThreadPoolService {
     private static final Logger logger = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
-    private static final String HYSTRIX_POOL_LIST = "SHOW MEASUREMENTS with measurement = /phonepe.prod.%s.HystrixThreadPool.*.propertyValue_corePoolSize/";
+
+    //TODO Move all queries to ThreadPoolQueryUtils. Makes the class clean
+    private static final String HYSTRIX_POOL_LIST_QUERY =
+            "SHOW MEASUREMENTS with measurement = /phonepe.prod.%s.HystrixThreadPool.*.propertyValue_corePoolSize/";
     private static final String HYSTRIX_POOL_NAME_PATTERN = "phonepe.prod.(.*).HystrixThreadPool.(.*).propertyValue_corePoolSize";
-    private static final String POOL_CORE_QUERY = "SELECT max(\"value\") FROM \"phonepe.prod.%s.HystrixThreadPool.%s.propertyValue_corePoolSize\" WHERE time > now() - 48h fill(null)";
-    private static final String POOL_USAGE_QUERY = "select percentile(\"max\", %s) from (SELECT max(\"value\") FROM \"phonepe.prod.%s.HystrixThreadPool.%s.rollingMaxActiveThreads\" WHERE time > now() - 72h group by time(1m) fill(null))";
+    //TODO Core pool query is getting values from 48 hours
+    private static final String CORE_POOL_QUERY =
+            "SELECT max(\"value\") FROM \"phonepe.prod.%s.HystrixThreadPool.%s.propertyValue_corePoolSize\" WHERE time > now() - 48h fill" +
+            "(null)";
+    //TODO Core pool query is getting values from 72 hours
+    //TODO This 72h should also come from the config
+    //Also this group by should be 30s instead of 1m
+    private static final String POOL_USAGE_QUERY =
+            "select percentile(\"max\", %s) from (SELECT max(\"value\") FROM \"phonepe.prod.%s.HystrixThreadPool.%s" +
+            ".rollingMaxActiveThreads\" WHERE time > now() - 72h group by time(1m) fill(null))";
 
     private HttpClient client;
     private Service service;
@@ -61,52 +71,58 @@ public class HystrixThreadPoolService {
                     continue;
                 }
             } catch (Exception e) {
-                logger.error("Error in getting hystrix pool list for Service: " + serviceName +
-                        " Error Message: " + e.getMessage(), e);
+                logger.error("Error in getting hystrix pool list for Service: " + serviceName + " Error Message: " + e.getMessage(), e);
                 continue;
             }
+            //TODO See if you can combine hystrixPoolsCore and hystrixPoolsUsage into one method. It should be generic method inside
+            // grafana service. Pass the query from outside and grafana service should return the response
+            //TODO It should return map of hystrix pool vs corePoolSize
             List<Integer> poolsCore = hystrixPoolsCore(serviceName, hystrixPools);
             if(CollectionUtils.isEmpty(poolsCore)) {
                 logger.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
                 continue;
             }
+            //TODO It should return map of hystrix pool vs poolUsage
             List<Integer> poolsUsage = hystrixPoolsUsage(serviceName, hystrixPools);
             if(CollectionUtils.isEmpty(poolsUsage)) {
                 logger.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = []");
                 continue;
             }
             String pool;
-            int poolCore;
+            int corePool;
             int poolUsage;
-            int totalPoolCore = 0;
+            int totalCorePool = 0;
             int reduceBy;
             int canBeFreed = 0;
             for(int poolCount = 0; poolCount < hystrixPools.size(); poolCount++) {
+                //TODO Get these corePool and poolUsage from the Map.
                 pool = hystrixPools.get(0);
-                poolCore = poolsCore.get(0);
-                poolUsage = poolsUsage.get(0);
-                if(poolCore <= 0 || poolUsage <= 0) {
+                corePool = poolsCore.get(poolCount);
+                poolUsage = poolsUsage.get(poolCount);
+                if(corePool <= 0 || poolUsage <= 0) {
                     continue;
                 }
-                totalPoolCore += poolCore;
-                if(poolCore - poolUsage > 0) {
-                    reduceBy = poolCore - poolUsage;
+                totalCorePool += corePool;
+                //TODO There should be some percentage difference which should come from config. Only is poolUsage is less than 50% of
+                // corePool, then you should calculate reduce by
+                if(corePool - poolUsage > 0) {
+                    reduceBy = corePool - poolUsage;
                 } else {
                     reduceBy = 0;
                 }
                 canBeFreed += reduceBy;
-//                logger.info(String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s",
-//                        serviceName, pool, poolCore, poolUsage, reduceBy));
+                //                logger.info(String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s",
+                //                        serviceName, pool, corePool, poolUsage, reduceBy));
             }
-            logger.info(String.format("Service: %s Type: HYSTRIX Total: %s Free: %s",
-                    serviceName, totalPoolCore, canBeFreed));
+            //TODO In the email, all stats should be sent. Corepool, poolUsage and other metrics and suggested reduction in poolSize
+            logger.info(String.format("Service: %s Type: HYSTRIX Total: %s Free: %s", serviceName, totalCorePool, canBeFreed));
         }
     }
 
     private List<Integer> hystrixPoolsCore(String serviceName, List<String> hystrixPools) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
-            String poolCoreQuery = String.format(POOL_CORE_QUERY, serviceName, hystrixPool);
+            String poolCoreQuery = String.format(CORE_POOL_QUERY, serviceName, hystrixPool);
             queries.add(poolCoreQuery);
         }
         List<Integer> responses;
@@ -178,22 +194,16 @@ public class HystrixThreadPoolService {
 
     private List<String> getHystrixPoolList(String serviceName) throws Exception {
         List<String> poolNames = new ArrayList<>();
-        String hystrixPoolList = String.format(HYSTRIX_POOL_LIST, serviceName);
+        String hystrixPoolList = String.format(HYSTRIX_POOL_LIST_QUERY, serviceName);
         String query = String.format(QUERY, hystrixPoolList);
-        HttpResponse response;
-        try {
-            response = OptimizerUtils.executeGetRequest(client, query);
-            int status = response.getStatusLine().getStatusCode();
-            if (status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
-                logger.error("Error in Http get, Status Code: " + response.getStatusLine().getStatusCode() + " received Response: " + response);
-                return Collections.emptyList();
-            }
-        } catch (Exception e) {
-            logger.error("Error in Http get: " + e.getMessage(), e);
+
+        HttpResponse response = getHttpResponse(client, query);
+        if(response == null) {
             return Collections.emptyList();
         }
+
         String data = EntityUtils.toString(response.getEntity());
-        JSONArray poolJSONArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
+        JSONArray poolJSONArray = getValuesFromMeasurementResponseData(data);
         if(poolJSONArray == null) {
             logger.error("Error in getting value from data: " + data);
             return Collections.emptyList();
@@ -201,7 +211,8 @@ public class HystrixThreadPoolService {
         //TODO Pool name might not match with service name. Either we need to introduce nomenclature for pool naming
         Pattern pattern = Pattern.compile(HYSTRIX_POOL_NAME_PATTERN);
         for(int i = 0; i < poolJSONArray.length(); i++) {
-            String metrics = ((JSONArray) poolJSONArray.get(i)).get(0).toString();
+            String metrics = ((JSONArray)poolJSONArray.get(i)).get(0)
+                    .toString();
             Matcher matcher = pattern.matcher(metrics);
             if(matcher.find()) {
                 poolNames.add(matcher.group(2));

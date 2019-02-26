@@ -20,12 +20,12 @@ public class OptimizerServer extends Application<OptimizerConfig> {
     @Override
     public void initialize(Bootstrap<OptimizerConfig> bootstrap) {
 
-        bootstrap.addBundle(new RiemannBundle<OptimizerConfig>() {
+        /*bootstrap.addBundle(new RiemannBundle<OptimizerConfig>() {
             @Override
             public RiemannConfig getRiemannConfiguration(OptimizerConfig configuration) {
                 return configuration.getRiemann();
             }
-        });
+        });*/
 
     }
 

@@ -5,6 +5,8 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -16,6 +18,8 @@ import java.util.Map;
 public class OptimizerUtils {
 
     public static final String QUERY = "%s;";
+    private static final Logger LOGGER = LoggerFactory.getLogger(OptimizerUtils.class);
+
     private static final String URL_TEMPLATE = "http://prd-grafana001.phonepe.nm1/api/datasources/proxy/1/query?db=riemann_metrics&q=%s";
     private static final String ENCODING = "UTF-8";
     public static final String RESULTS = "results";
@@ -30,13 +34,16 @@ public class OptimizerUtils {
     //TODO Need to change to api-group thread pools. You will extract the pools and service name from there
     private static Map<String, String> GRAFANA_HEADERS = new HashMap<String, String>() {{
         put("Referer", "http://prd-grafana001.phonepe.nm1/dashboard/db/api-hystrix");
-        put("Cookie", "grafana_user=admin; grafana_sess=cd9ad618a07791d8; grafana_remember=97431358d8af8b6e873e9337dd3fc797f0feb0aac63aebf9");
+        put("Cookie",
+            "grafana_user=admin; grafana_sess=b0605b3bb1f7de9f; grafana_remember=bc7f1122a2c5eb1c3e4ab1f12f3dabdf209c77b8889a7abe"
+           );
     }};
 
     public static HttpResponse executeGetRequest(HttpClient client, String query) throws Exception {
         String encodedQuery = URLEncoder.encode(query, ENCODING);
         String url = String.format(URL_TEMPLATE, encodedQuery);
         HttpGet request = new HttpGet(url);
+        //TODO Get these headers from grafana config
         GRAFANA_HEADERS.forEach(request::addHeader);
         return client.execute(request);
     }
@@ -76,5 +83,24 @@ public class OptimizerUtils {
             return (JSONArray) jsonArray.get(index);
         }
         return null;
+    }
+
+    public static HttpResponse getHttpResponse(HttpClient client, String query) {
+        HttpResponse response;
+        try {
+            response = executeGetRequest(client, query);
+            int status = response.getStatusLine()
+                    .getStatusCode();
+            if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
+                LOGGER.error("Error in Http get, Status Code: " + response.getStatusLine()
+                        .getStatusCode() + " received Response: " + response);
+
+                return null;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error in Http get: " + e.getMessage(), e);
+            return null;
+        }
+        return response;
     }
 }

@@ -1,7 +1,6 @@
 package com.optimizer.threadpool;
 
 import com.google.common.collect.Lists;
-import com.optimizer.util.OptimizerUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -12,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.optimizer.util.OptimizerUtils.QUERY;
+import static com.optimizer.util.OptimizerUtils.getHttpResponse;
 
 /***
  Created by mudit.g on Feb, 2019
@@ -31,12 +31,8 @@ public class GrafanaService {
         for(List<String> queryChunk : Lists.partition(queries, PARTITION_SIZE)) {
             String query = String.join(";", queryChunk);
             query = String.format(QUERY, query);
-            HttpResponse response;
-            try {
-                response = OptimizerUtils.executeGetRequest(client, query);
-                responses.add(response);
-            } catch (Exception e) {
-                logger.error("Error in Http get: " + e.getMessage(), e);
+            HttpResponse response = getHttpResponse(client, query);
+            if(response == null) {
                 return Collections.emptyList();
             }
         }
