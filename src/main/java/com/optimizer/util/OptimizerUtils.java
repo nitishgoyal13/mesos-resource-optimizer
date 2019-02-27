@@ -31,6 +31,7 @@ public class OptimizerUtils {
     public static final int PERCENTILE = 99;
     public static final int STATUS_OK_RANGE_START = 200;
     public static final int STATUS_OK_RANGE_END = 300;
+
     //TODO Need to change to api-group thread pools. You will extract the pools and service name from there
     private static Map<String, String> GRAFANA_HEADERS = new HashMap<String, String>() {{
         put("Referer", "http://prd-grafana001.phonepe.nm1/dashboard/db/api-hystrix");
@@ -39,7 +40,7 @@ public class OptimizerUtils {
            );
     }};
 
-    public static HttpResponse executeGetRequest(HttpClient client, String query) throws Exception {
+    private static HttpResponse executeGetRequest(HttpClient client, String query) throws Exception {
         String encodedQuery = URLEncoder.encode(query, ENCODING);
         String url = String.format(URL_TEMPLATE, encodedQuery);
         HttpGet request = new HttpGet(url);
@@ -64,13 +65,6 @@ public class OptimizerUtils {
         return null;
     }
 
-    public static JSONObject getObjectFromJSONObject(JSONObject jsonObject, String key) {
-        if(jsonObject != null && jsonObject.has(key)) {
-            return (JSONObject) jsonObject.get(key);
-        }
-        return null;
-    }
-
     public static JSONObject getObjectFromJSONArray(JSONArray jsonArray, int index) {
         if(jsonArray != null && jsonArray.length() > index) {
             return (JSONObject) jsonArray.get(index);
@@ -86,9 +80,8 @@ public class OptimizerUtils {
     }
 
     public static HttpResponse getHttpResponse(HttpClient client, String query) {
-        HttpResponse response;
         try {
-            response = executeGetRequest(client, query);
+            HttpResponse response = executeGetRequest(client, query);
             int status = response.getStatusLine()
                     .getStatusCode();
             if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
@@ -97,10 +90,10 @@ public class OptimizerUtils {
 
                 return null;
             }
+            return response;
         } catch (Exception e) {
             LOGGER.error("Error in Http get: " + e.getMessage(), e);
             return null;
         }
-        return response;
     }
 }
