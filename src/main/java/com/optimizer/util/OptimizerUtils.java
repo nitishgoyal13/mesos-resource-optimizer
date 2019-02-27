@@ -36,7 +36,7 @@ public class OptimizerUtils {
     private static Map<String, String> GRAFANA_HEADERS = new HashMap<String, String>() {{
         put("Referer", "http://prd-grafana001.phonepe.nm1/dashboard/db/api-hystrix");
         put("Cookie",
-            "grafana_user=admin; grafana_sess=b0605b3bb1f7de9f; grafana_remember=bc7f1122a2c5eb1c3e4ab1f12f3dabdf209c77b8889a7abe"
+            "grafana_user=admin; grafana_sess=ff16a0e4a23fc218; grafana_remember=d3f77f92a8b5a5b653c1a9358ca58d39d44a076d5485d2de"
            );
     }};
 
