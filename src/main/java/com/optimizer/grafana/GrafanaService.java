@@ -9,16 +9,14 @@ import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.optimizer.grafana.GrafanaQueryUtils.SERVICE_LIST_PATTERN;
-import static com.optimizer.grafana.GrafanaQueryUtils.SERVICE_LIST_QUERY;
-import static com.optimizer.util.OptimizerUtils.QUERY;
-import static com.optimizer.util.OptimizerUtils.getHttpResponse;
+import static com.optimizer.grafana.GrafanaQueryUtils.*;
+import static com.optimizer.threadpool.ThreadPoolQueryUtils.HYSTRIX_POOL_LIST_QUERY;
+import static com.optimizer.threadpool.ThreadPoolQueryUtils.HYSTRIX_POOL_NAME_PATTERN;
+import static com.optimizer.util.OptimizerUtils.*;
 
 /***
  Created by mudit.g on Feb, 2019
@@ -48,37 +46,45 @@ public class GrafanaService {
         return responses;
     }
 
-    public List<String> getAllServices() {
+    public Map<String, List<String>> getServiceVsPoolList(String clusterName) {
+        Map<String, List<String>> serviceVsPoolList = new HashMap<>();
         try {
-            List<String> services = new ArrayList<>();
-            String query = String.format(QUERY, SERVICE_LIST_QUERY);
+            String poolListQuery = String.format(POOL_LIST_QUERY, clusterName);
+            String query = String.format(QUERY, poolListQuery);
 
             HttpResponse response = getHttpResponse(client, query);
             if(response == null) {
-                return Collections.emptyList();
+                return Collections.emptyMap();
             }
 
             String data = EntityUtils.toString(response.getEntity());
             JSONArray serviceJSONArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
             if(serviceJSONArray == null) {
                 LOGGER.error("Error in getting value from data: " + data);
-                return Collections.emptyList();
+                return Collections.emptyMap();
             }
-            Pattern pattern = Pattern.compile(SERVICE_LIST_PATTERN);
+            String poolListPattern = String.format(POOL_LIST_PATTERN, clusterName);
+            Pattern pattern = Pattern.compile(poolListPattern);
             for(int i = 0; i < serviceJSONArray.length(); i++) {
                 String metrics = ((JSONArray)serviceJSONArray.get(i)).get(0)
                         .toString();
                 Matcher matcher = pattern.matcher(metrics);
                 if(matcher.find()) {
-                    services.add(matcher.group(1));
+                    String pool = matcher.group(INDEX_ONE);
+                    String service = pool.split("\\.")[0];
+                    if(serviceVsPoolList.containsKey(service)) {
+                        serviceVsPoolList.get(service).add(pool);
+                    } else {
+                        serviceVsPoolList.put(service, new ArrayList<>(Arrays.asList(pool)));
+                    }
                 } else {
                     LOGGER.error("Match not found for: " + metrics);
                 }
             }
-            return services;
+            return serviceVsPoolList;
         } catch (Exception e) {
             LOGGER.error("Error in getting list of services: " + e.getMessage(), e);
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
     }
 }

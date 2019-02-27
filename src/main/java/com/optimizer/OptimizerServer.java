@@ -1,5 +1,6 @@
 package com.optimizer;
 
+import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.config.OptimizerConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.threadpool.HystrixThreadPoolService;
@@ -30,8 +31,13 @@ public class OptimizerServer extends Application<OptimizerConfig> {
     public void run(OptimizerConfig configuration, Environment environment) throws Exception {
         HttpClient httpClient = HttpClientBuilder.create()
                 .build();
+        ThreadPoolConfig hystrixThreadPoolConfig = configuration.getHystrixThreadPoolConfig();
+        if(hystrixThreadPoolConfig == null) {
+            hystrixThreadPoolConfig = new ThreadPoolConfig();
+        }
         GrafanaService grafanaService = new GrafanaService(httpClient);
-        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(httpClient, grafanaService);
+        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(httpClient,
+                grafanaService, hystrixThreadPoolConfig);
 
 
         hystrixThreadPoolService.handleHystrixPools();

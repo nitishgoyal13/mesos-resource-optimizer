@@ -22,4 +22,6 @@ public class OptimizerConfig extends Configuration {
 
     private GrafannaConfig grafannaConfig;
 
+    @Valid
+    private ThreadPoolConfig hystrixThreadPoolConfig;
 }
