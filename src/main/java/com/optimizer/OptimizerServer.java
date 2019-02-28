@@ -1,7 +1,7 @@
 package com.optimizer;
 
-import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.config.OptimizerConfig;
+import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.threadpool.HystrixThreadPoolService;
 import io.dropwizard.Application;
@@ -36,10 +36,11 @@ public class OptimizerServer extends Application<OptimizerConfig> {
             hystrixThreadPoolConfig = new ThreadPoolConfig();
         }
         GrafanaService grafanaService = new GrafanaService(httpClient);
-        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(httpClient,
-                grafanaService, hystrixThreadPoolConfig);
+        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(httpClient, grafanaService,
+                                                                                         hystrixThreadPoolConfig
+        );
 
-
+        //TODO This should happen through a job
         hystrixThreadPoolService.handleHystrixPools();
     }
 }

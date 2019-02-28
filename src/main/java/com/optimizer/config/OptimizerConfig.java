@@ -4,6 +4,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.riemann.RiemannConfig;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 /***
  Created by nitish.goyal on 19/02/19
  ***/
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 public class OptimizerConfig extends Configuration {
@@ -22,6 +24,5 @@ public class OptimizerConfig extends Configuration {
 
     private GrafannaConfig grafannaConfig;
 
-    @Valid
     private ThreadPoolConfig hystrixThreadPoolConfig;
 }

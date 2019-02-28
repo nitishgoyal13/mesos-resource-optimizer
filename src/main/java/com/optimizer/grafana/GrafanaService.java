@@ -13,9 +13,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.optimizer.grafana.GrafanaQueryUtils.*;
-import static com.optimizer.threadpool.ThreadPoolQueryUtils.HYSTRIX_POOL_LIST_QUERY;
-import static com.optimizer.threadpool.ThreadPoolQueryUtils.HYSTRIX_POOL_NAME_PATTERN;
+import static com.optimizer.grafana.GrafanaQueryUtils.POOL_LIST_PATTERN;
+import static com.optimizer.grafana.GrafanaQueryUtils.POOL_LIST_QUERY;
 import static com.optimizer.util.OptimizerUtils.*;
 
 /***
@@ -32,7 +31,7 @@ public class GrafanaService {
         this.client = client;
     }
 
-    public List<HttpResponse> execute(List<String> queries) throws Exception {
+    public List<HttpResponse> execute(List<String> queries) {
         List<HttpResponse> responses = new ArrayList<>();
         for(List<String> queryChunk : Lists.partition(queries, PARTITION_SIZE)) {
             String query = String.join(";", queryChunk);
@@ -58,24 +57,25 @@ public class GrafanaService {
             }
 
             String data = EntityUtils.toString(response.getEntity());
-            JSONArray serviceJSONArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
-            if(serviceJSONArray == null) {
+            JSONArray serviceJsonArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
+            if(serviceJsonArray == null) {
                 LOGGER.error("Error in getting value from data: " + data);
                 return Collections.emptyMap();
             }
             String poolListPattern = String.format(POOL_LIST_PATTERN, clusterName);
             Pattern pattern = Pattern.compile(poolListPattern);
-            for(int i = 0; i < serviceJSONArray.length(); i++) {
-                String metrics = ((JSONArray)serviceJSONArray.get(i)).get(0)
+            for(int i = 0; i < serviceJsonArray.length(); i++) {
+                String metrics = ((JSONArray)serviceJsonArray.get(i)).get(0)
                         .toString();
                 Matcher matcher = pattern.matcher(metrics);
                 if(matcher.find()) {
                     String pool = matcher.group(INDEX_ONE);
                     String service = pool.split("\\.")[0];
                     if(serviceVsPoolList.containsKey(service)) {
-                        serviceVsPoolList.get(service).add(pool);
+                        serviceVsPoolList.get(service)
+                                .add(pool);
                     } else {
-                        serviceVsPoolList.put(service, new ArrayList<>(Arrays.asList(pool)));
+                        serviceVsPoolList.put(service, Lists.newArrayList(pool));
                     }
                 } else {
                     LOGGER.error("Match not found for: " + metrics);
