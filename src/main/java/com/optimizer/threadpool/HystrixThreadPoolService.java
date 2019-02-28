@@ -24,7 +24,6 @@ import static com.optimizer.util.OptimizerUtils.*;
  Created by mudit.g on Feb, 2019
  ***/
 @Builder
-@AllArgsConstructor
 public class HystrixThreadPoolService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
@@ -33,6 +32,12 @@ public class HystrixThreadPoolService {
     private HttpClient client;
     private GrafanaService grafanaService;
     private ThreadPoolConfig threadPoolConfig;
+
+    public HystrixThreadPoolService(HttpClient client, GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig) {
+        this.client = client;
+        this.grafanaService = grafanaService;
+        this.threadPoolConfig = threadPoolConfig;
+    }
 
     public void handleHystrixPools() {
         Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(CLUSTER_NAME);
