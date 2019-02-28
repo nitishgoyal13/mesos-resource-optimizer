@@ -5,8 +5,8 @@ import io.dropwizard.riemann.RiemannConfig;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-import javax.validation.Valid;
 import java.util.List;
 
 /***
@@ -15,14 +15,14 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
+@Getter
 public class OptimizerConfig extends Configuration {
 
-    @Valid
-    private RiemannConfig riemann;
+    private final RiemannConfig riemann;
 
-    private List<ServiceConfig> serviceConfigs;
+    private final List<ServiceConfig> serviceConfigs;
 
-    private GrafannaConfig grafannaConfig;
+    private final GrafannaConfig grafannaConfig;
 
-    private ThreadPoolConfig hystrixThreadPoolConfig;
+    private final ThreadPoolConfig hystrixThreadPoolConfig;
 }
