@@ -18,7 +18,7 @@ public class ThreadPoolConfig {
 
     private int maxUsagePercentage = 80;
 
-    private int queryDuration = 72;
+    private int queryDurationInHours = 72;
 
     public int getThresholdUsagePercentage() {
         return thresholdUsagePercentage;
@@ -36,11 +36,11 @@ public class ThreadPoolConfig {
         this.maxUsagePercentage = maxUsagePercentage;
     }
 
-    public int getQueryDuration() {
-        return queryDuration;
+    public int getQueryDurationInHours() {
+        return queryDurationInHours;
     }
 
-    public void setQueryDuration(int queryDuration) {
-        this.queryDuration = queryDuration;
+    public void setQueryDurationInHours(int queryDurationInHours) {
+        this.queryDurationInHours = queryDurationInHours;
     }
 }
