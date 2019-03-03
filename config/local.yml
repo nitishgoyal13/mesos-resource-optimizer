@@ -6,6 +6,10 @@ server:
     - type: http
       port: 17001
 
+grafannaConfig:
+  headers:
+    - name: Authorization
+      value: Bearer eyJrIjoiWkxRWEJPS3ZUNURUbTlsQ2VEalVQUGpLSDhZZW9RMGgiLCJuIjoib3B0aW1pemVyIiwiaWQiOjF9
 
 logging:
   level: INFO

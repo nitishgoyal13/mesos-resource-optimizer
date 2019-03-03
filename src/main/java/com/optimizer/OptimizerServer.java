@@ -1,5 +1,6 @@
 package com.optimizer;
 
+import com.optimizer.config.GrafannaConfig;
 import com.optimizer.config.OptimizerConfig;
 import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
@@ -35,8 +36,10 @@ public class OptimizerServer extends Application<OptimizerConfig> {
         if(hystrixThreadPoolConfig == null) {
             hystrixThreadPoolConfig = new ThreadPoolConfig();
         }
+        GrafannaConfig grafannaConfig = configuration.getGrafannaConfig();
         GrafanaService grafanaService = GrafanaService.builder()
                 .client(httpClient)
+                .grafannaConfig(grafannaConfig)
                 .build();
         //TODO Comment : Always try to use builder pattern over new
         HystrixThreadPoolService hystrixThreadPoolService = HystrixThreadPoolService.builder()

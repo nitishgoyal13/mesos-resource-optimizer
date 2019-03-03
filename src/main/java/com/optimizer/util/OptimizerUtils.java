@@ -1,5 +1,6 @@
 package com.optimizer.util;
 
+import com.optimizer.config.GrafannaConfig;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -28,24 +29,16 @@ public class OptimizerUtils {
     public static final int INDEX_ZERO = 0;
     public static final int INDEX_ONE = 1;
     public static final int NULL_VALUE = -1;
-    public static final int PERCENTILE = 99;
     public static final int STATUS_OK_RANGE_START = 200;
     public static final int STATUS_OK_RANGE_END = 300;
 
-    //TODO Need to change to api-group thread pools. You will extract the pools and service name from there
-    private static Map<String, String> GRAFANA_HEADERS = new HashMap<String, String>() {{
-        put("Referer", "http://prd-grafana001.phonepe.nm1/dashboard/db/api-hystrix");
-        put("Cookie",
-            "grafana_user=admin; grafana_sess=ff16a0e4a23fc218; grafana_remember=d3f77f92a8b5a5b653c1a9358ca58d39d44a076d5485d2de"
-           );
-    }};
-
-    private static HttpResponse executeGetRequest(HttpClient client, String query) throws Exception {
+    private static HttpResponse executeGetRequest(HttpClient client, String query,
+                                                  GrafannaConfig grafannaConfig) throws Exception {
         String encodedQuery = URLEncoder.encode(query, ENCODING);
         String url = String.format(URL_TEMPLATE, encodedQuery);
         HttpGet request = new HttpGet(url);
-        //TODO Get these headers from grafana config
-        GRAFANA_HEADERS.forEach(request::addHeader);
+        grafannaConfig.getHeaders()
+                .forEach(header -> request.addHeader(header.getName(), header.getValue()));
         return client.execute(request);
     }
 
@@ -79,9 +72,9 @@ public class OptimizerUtils {
         return null;
     }
 
-    public static HttpResponse getHttpResponse(HttpClient client, String query) {
+    public static HttpResponse getHttpResponse(HttpClient client, String query, GrafannaConfig grafannaConfig) {
         try {
-            HttpResponse response = executeGetRequest(client, query);
+            HttpResponse response = executeGetRequest(client, query, grafannaConfig);
             int status = response.getStatusLine()
                     .getStatusCode();
             if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {

@@ -1,6 +1,7 @@
 package com.optimizer.grafana;
 
 import com.google.common.collect.Lists;
+import com.optimizer.config.GrafannaConfig;
 import com.optimizer.util.OptimizerUtils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,13 +31,14 @@ public class GrafanaService {
     private static final int PARTITION_SIZE = 20;
 
     private HttpClient client;
+    private GrafannaConfig grafannaConfig;
 
     public List<HttpResponse> execute(List<String> queries) {
         List<HttpResponse> responses = new ArrayList<>();
         for(List<String> queryChunk : Lists.partition(queries, PARTITION_SIZE)) {
             String query = String.join(";", queryChunk);
             query = String.format(QUERY, query);
-            HttpResponse response = getHttpResponse(client, query);
+            HttpResponse response = getHttpResponse(client, query, grafannaConfig);
             responses.add(response);
             if(response == null) {
                 return Collections.emptyList();
@@ -51,7 +53,7 @@ public class GrafanaService {
             String poolListQuery = String.format(POOL_LIST_QUERY, clusterName);
             String query = String.format(QUERY, poolListQuery);
 
-            HttpResponse response = getHttpResponse(client, query);
+            HttpResponse response = getHttpResponse(client, query, grafannaConfig);
             if(response == null) {
                 return Collections.emptyMap();
             }
