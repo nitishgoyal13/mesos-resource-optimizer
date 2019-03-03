@@ -1,8 +1,10 @@
 package com.optimizer.threadpool;
 
 import com.collections.CollectionUtils;
+import com.optimizer.config.ServiceConfig;
 import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
+import com.optimizer.mail.MailSender;
 import lombok.Builder;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -21,20 +23,22 @@ import static com.optimizer.util.OptimizerUtils.*;
 /***
  Created by mudit.g on Feb, 2019
  ***/
-@Builder
 public class HystrixThreadPoolService extends TimerTask {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
     private static final String CLUSTER_NAME = "api";
 
-    private HttpClient client;
     private GrafanaService grafanaService;
     private ThreadPoolConfig threadPoolConfig;
+    private List<ServiceConfig> serviceConfigs;
+    private MailSender mailSender;
 
-    public HystrixThreadPoolService(HttpClient client, GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig) {
-        this.client = client;
+    public HystrixThreadPoolService(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig,
+                                    MailSender mailSender, List<ServiceConfig> serviceConfigs) {
         this.grafanaService = grafanaService;
         this.threadPoolConfig = threadPoolConfig;
+        this.mailSender = mailSender;
+        this.serviceConfigs = serviceConfigs;
     }
 
     @Override
@@ -44,59 +48,67 @@ public class HystrixThreadPoolService extends TimerTask {
             LOGGER.error("Error in getting serviceVsPoolList. Got empty map");
             return;
         }
-        for(String serviceName : CollectionUtils.nullAndEmptySafeValueList(serviceVsPoolList.keySet())) {
-            List<String> hystrixPools = serviceVsPoolList.get(serviceName);
-            if(CollectionUtils.isEmpty(hystrixPools)) {
-                LOGGER.error("Error in getting hystrix pool list for Service: " + serviceName + ". Got hystrixPools = []");
-                continue;
+        serviceConfigs.forEach(serviceConfig -> {
+            if(serviceVsPoolList.containsKey(serviceConfig.getService())) {
+                handleHystrixPool(serviceConfig.getService(), serviceVsPoolList, serviceConfig.getOwnerEmail());
             }
+        });
+    }
 
-            Map<String, Integer> hystrixPoolVsCorePool = corePool(hystrixPools);
-            if(CollectionUtils.isEmpty(hystrixPoolVsCorePool)) {
-                LOGGER.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
-                continue;
-            }
-            Map<String, Integer> hystrixPoolVsPoolsUsage = poolUsage(hystrixPools);
-            if(CollectionUtils.isEmpty(hystrixPoolVsPoolsUsage)) {
-                LOGGER.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = []");
-                continue;
-            }
-            String pool;
-            int corePool;
-            int poolUsage;
-            int totalCorePool = 0;
-            int canBeFreed = 0;
-            for(String hystrixPool : hystrixPools) {
-                int reduceBy = 0;
-                pool = hystrixPool;
-                if(hystrixPoolVsCorePool.containsKey(pool)) {
-                    corePool = hystrixPoolVsCorePool.get(pool);
-                } else {
-                    LOGGER.error(String.format("Pool: %s, not present in hystrixPoolVsCorePool map", pool));
-                    continue;
-                }
-                if(hystrixPoolVsPoolsUsage.containsKey(pool)) {
-                    poolUsage = hystrixPoolVsPoolsUsage.get(pool);
-                } else {
-                    LOGGER.error(String.format("Pool: %s, not present in hystrixPoolVsPoolsUsage map", pool));
-                    continue;
-                }
-                if(corePool <= 0 || poolUsage <= 0) {
-                    continue;
-                }
-                totalCorePool += corePool;
-                int usagePercentage = poolUsage * 100 / corePool;
-                if(usagePercentage < threadPoolConfig.getThresholdUsagePercentage()) {
-                    reduceBy = ((corePool * threadPoolConfig.getMaxUsagePercentage()) / 100) - poolUsage;
-                }
-                canBeFreed += reduceBy;
-                LOGGER.info(String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s", serviceName, pool, corePool,
-                                          poolUsage, reduceBy
-                                         ));
-            }
-            //TODO In the email, all stats should be sent. Corepool, poolUsage and other metrics and suggested reduction in poolSize
-            LOGGER.info(String.format("Service: %s Type: HYSTRIX Total: %s Free: %s", serviceName, totalCorePool, canBeFreed));
+    private void handleHystrixPool(String serviceName, Map<String, List<String>> serviceVsPoolList, String ownerEmail) {
+        List<String> hystrixPools = serviceVsPoolList.get(serviceName);
+        if(CollectionUtils.isEmpty(hystrixPools)) {
+            LOGGER.error("Error in getting hystrix pool list for Service: " + serviceName + ". Got hystrixPools = []");
+            return;
         }
+
+        Map<String, Integer> hystrixPoolVsCorePool = corePool(hystrixPools);
+        if(CollectionUtils.isEmpty(hystrixPoolVsCorePool)) {
+            LOGGER.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
+            return;
+        }
+        Map<String, Integer> hystrixPoolVsPoolsUsage = poolUsage(hystrixPools);
+        if(CollectionUtils.isEmpty(hystrixPoolVsPoolsUsage)) {
+            LOGGER.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = []");
+            return;
+        }
+        String pool;
+        int corePool;
+        int poolUsage;
+        int totalCorePool = 0;
+        int canBeFreed = 0;
+        for(String hystrixPool : hystrixPools) {
+            int reduceBy = 0;
+            pool = hystrixPool;
+            if(hystrixPoolVsCorePool.containsKey(pool)) {
+                corePool = hystrixPoolVsCorePool.get(pool);
+            } else {
+                LOGGER.error(String.format("Pool: %s, not present in hystrixPoolVsCorePool map", pool));
+                continue;
+            }
+            if(hystrixPoolVsPoolsUsage.containsKey(pool)) {
+                poolUsage = hystrixPoolVsPoolsUsage.get(pool);
+            } else {
+                LOGGER.error(String.format("Pool: %s, not present in hystrixPoolVsPoolsUsage map", pool));
+                continue;
+            }
+            if(corePool <= 0 || poolUsage <= 0) {
+                continue;
+            }
+            totalCorePool += corePool;
+            int usagePercentage = poolUsage * 100 / corePool;
+            if(usagePercentage < threadPoolConfig.getThresholdUsagePercentage()) {
+                reduceBy = ((corePool * threadPoolConfig.getMaxUsagePercentage()) / 100) - poolUsage;
+                mailSender.send(MAIL_SUBJECT,
+                        getMailBody(serviceName, pool, corePool, poolUsage, reduceBy), ownerEmail);
+            }
+            canBeFreed += reduceBy;
+            LOGGER.info(String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s", serviceName,
+                    pool, corePool,
+                    poolUsage, reduceBy
+            ));
+        }
+        LOGGER.info(String.format("Service: %s Type: HYSTRIX Total: %s Free: %s", serviceName, totalCorePool, canBeFreed));
     }
 
     private Map<String, Integer> corePool(List<String> hystrixPools) {

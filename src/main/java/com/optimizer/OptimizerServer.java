@@ -2,8 +2,10 @@ package com.optimizer;
 
 import com.optimizer.config.GrafannaConfig;
 import com.optimizer.config.OptimizerConfig;
+import com.optimizer.config.ServiceConfig;
 import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
+import com.optimizer.mail.MailSender;
 import com.optimizer.threadpool.HystrixThreadPoolService;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
@@ -11,6 +13,7 @@ import io.dropwizard.setup.Environment;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 
+import java.util.List;
 import java.util.Timer;
 
 /***
@@ -38,12 +41,15 @@ public class OptimizerServer extends Application<OptimizerConfig> {
         if(hystrixThreadPoolConfig == null) {
             hystrixThreadPoolConfig = new ThreadPoolConfig();
         }
+        List<ServiceConfig> serviceConfigs = configuration.getServiceConfigs();
+        MailSender mailSender = new MailSender(configuration.getMail());
 
         GrafannaConfig grafannaConfig = configuration.getGrafannaConfig();
         GrafanaService grafanaService = new GrafanaService(httpClient, grafannaConfig);
 
-        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(httpClient, grafanaService,
-                                                                                         hystrixThreadPoolConfig
+        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(grafanaService,
+                                                                                         hystrixThreadPoolConfig,
+                                                                                         mailSender, serviceConfigs
         );
 
         Timer timer = new Timer();

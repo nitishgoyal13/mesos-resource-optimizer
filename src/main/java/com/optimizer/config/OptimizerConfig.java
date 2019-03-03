@@ -1,5 +1,6 @@
 package com.optimizer.config;
 
+import com.optimizer.mail.config.MailConfig;
 import io.dropwizard.Configuration;
 import io.dropwizard.riemann.RiemannConfig;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,8 @@ public class OptimizerConfig extends Configuration {
     private GrafannaConfig grafannaConfig;
 
     private ThreadPoolConfig threadPoolConfig;
+
+    private MailConfig mail;
 
     public RiemannConfig getRiemann() {
         return riemann;

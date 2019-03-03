@@ -31,6 +31,7 @@ public class OptimizerUtils {
     public static final int NULL_VALUE = -1;
     public static final int STATUS_OK_RANGE_START = 200;
     public static final int STATUS_OK_RANGE_END = 300;
+    public static final String MAIL_SUBJECT = "Thread Pool Optimization";
 
     private static HttpResponse executeGetRequest(HttpClient client, String query,
                                                   GrafannaConfig grafannaConfig) throws Exception {
@@ -88,5 +89,13 @@ public class OptimizerUtils {
             LOGGER.error("Error in Http get: " + e.getMessage(), e);
             return null;
         }
+    }
+
+    public static String getMailBody(String serviceName, String pool, int corePool, int poolUsage, int reduceBy) {
+        return "Hystrix Thread Pool can be optimized. <br>Service: " + serviceName +
+                " <br>HYSTRIX Pool: " + pool +
+                " <br> Core Pool: " + Integer.toString(corePool) +
+                " <br> Pool Usage: " + Integer.toString(poolUsage) +
+                " <br> Can be reduced by: " + Integer.toString(reduceBy);
     }
 }
