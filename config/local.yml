@@ -11,5 +11,12 @@ grafannaConfig:
     - name: Authorization
       value: Bearer eyJrIjoiWkxRWEJPS3ZUNURUbTlsQ2VEalVQUGpLSDhZZW9RMGgiLCJuIjoib3B0aW1pemVyIiwiaWQiOjF9
 
+threadPoolConfig:
+  thresholdUsagePercentage: 60
+  maxUsagePercentage: 80
+  queryDurationInHours: 72
+  initialDelayInSeconds: 1
+  intervalInSeconds: 86400
+
 logging:
   level: INFO

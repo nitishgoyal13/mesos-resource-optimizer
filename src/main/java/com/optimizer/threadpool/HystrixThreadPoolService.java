@@ -22,7 +22,7 @@ import static com.optimizer.util.OptimizerUtils.*;
  Created by mudit.g on Feb, 2019
  ***/
 @Builder
-public class HystrixThreadPoolService {
+public class HystrixThreadPoolService extends TimerTask {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
     private static final String CLUSTER_NAME = "api";
@@ -37,7 +37,8 @@ public class HystrixThreadPoolService {
         this.threadPoolConfig = threadPoolConfig;
     }
 
-    public void handleHystrixPools() {
+    @Override
+    public void run() {
         Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(CLUSTER_NAME);
         if(CollectionUtils.isEmpty(serviceVsPoolList)) {
             LOGGER.error("Error in getting serviceVsPoolList. Got empty map");

@@ -22,7 +22,7 @@ public class OptimizerConfig extends Configuration {
 
     private GrafannaConfig grafannaConfig;
 
-    private ThreadPoolConfig hystrixThreadPoolConfig;
+    private ThreadPoolConfig threadPoolConfig;
 
     public RiemannConfig getRiemann() {
         return riemann;
@@ -36,7 +36,7 @@ public class OptimizerConfig extends Configuration {
         return grafannaConfig;
     }
 
-    public ThreadPoolConfig getHystrixThreadPoolConfig() {
-        return hystrixThreadPoolConfig;
+    public ThreadPoolConfig getThreadPoolConfig() {
+        return threadPoolConfig;
     }
 }

@@ -11,6 +11,8 @@ import io.dropwizard.setup.Environment;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 
+import java.util.Timer;
+
 /***
  Created by nitish.goyal on 18/02/19
  ***/
@@ -32,7 +34,7 @@ public class OptimizerServer extends Application<OptimizerConfig> {
     public void run(OptimizerConfig configuration, Environment environment) throws Exception {
         HttpClient httpClient = HttpClientBuilder.create()
                 .build();
-        ThreadPoolConfig hystrixThreadPoolConfig = configuration.getHystrixThreadPoolConfig();
+        ThreadPoolConfig hystrixThreadPoolConfig = configuration.getThreadPoolConfig();
         if(hystrixThreadPoolConfig == null) {
             hystrixThreadPoolConfig = new ThreadPoolConfig();
         }
@@ -44,7 +46,9 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                                                                                          hystrixThreadPoolConfig
         );
 
-        //TODO This should happen through a job
-        hystrixThreadPoolService.handleHystrixPools();
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(hystrixThreadPoolService,
+                hystrixThreadPoolConfig.getInitialDelayInSeconds() * 1000,
+                hystrixThreadPoolConfig.getIntervalInSeconds() * 1000);
     }
 }
