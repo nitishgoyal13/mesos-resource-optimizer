@@ -1,9 +1,8 @@
 package com.optimizer.grafana;
 
 import com.google.common.collect.Lists;
-import com.optimizer.config.GrafannaConfig;
+import com.optimizer.grafana.config.GrafannaConfig;
 import com.optimizer.util.OptimizerUtils;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;

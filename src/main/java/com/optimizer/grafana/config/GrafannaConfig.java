@@ -1,4 +1,4 @@
-package com.optimizer.config;
+package com.optimizer.grafana.config;
 
 import lombok.Data;
 

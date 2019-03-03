@@ -1,6 +1,6 @@
 package com.optimizer.util;
 
-import com.optimizer.config.GrafannaConfig;
+import com.optimizer.grafana.config.GrafannaConfig;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -10,8 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.Map;
 
 /***
  Created by nitish.goyal on 18/02/19

@@ -1,6 +1,8 @@
 package com.optimizer.config;
 
+import com.optimizer.grafana.config.GrafannaConfig;
 import com.optimizer.mail.config.MailConfig;
+import com.optimizer.threadpool.config.ThreadPoolConfig;
 import io.dropwizard.Configuration;
 import io.dropwizard.riemann.RiemannConfig;
 import lombok.AllArgsConstructor;

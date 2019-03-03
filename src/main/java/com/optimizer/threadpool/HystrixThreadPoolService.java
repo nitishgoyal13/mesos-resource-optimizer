@@ -2,12 +2,10 @@ package com.optimizer.threadpool;
 
 import com.collections.CollectionUtils;
 import com.optimizer.config.ServiceConfig;
-import com.optimizer.config.ThreadPoolConfig;
+import com.optimizer.threadpool.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.mail.MailSender;
-import lombok.Builder;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;

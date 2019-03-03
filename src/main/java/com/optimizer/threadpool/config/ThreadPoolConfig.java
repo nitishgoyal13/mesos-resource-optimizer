@@ -1,4 +1,4 @@
-package com.optimizer.config;
+package com.optimizer.threadpool.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

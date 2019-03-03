@@ -1,9 +1,9 @@
 package com.optimizer;
 
-import com.optimizer.config.GrafannaConfig;
+import com.optimizer.grafana.config.GrafannaConfig;
 import com.optimizer.config.OptimizerConfig;
 import com.optimizer.config.ServiceConfig;
-import com.optimizer.config.ThreadPoolConfig;
+import com.optimizer.threadpool.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.mail.MailSender;
 import com.optimizer.threadpool.HystrixThreadPoolService;
