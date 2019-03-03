@@ -24,17 +24,10 @@ serviceConfigs:
   - service: symphony-irctc-pool
     ownerEmail: mudit.g@phonepe.com
 
-#mail:
-#  host: ${MAIL_IP}
-#  user: ${MAIL_USER}
-#  password: ${MAIL_PASSWORD}
-#  port: 25
-#  from: noreply@phonepe.com
-
 mail:
-  host: ops-jump001.phonepe.nm1
-  user: AKIAJLCWHAOEDK4ZDOGQT
-  password: AgjCxNI68hrnj6bIzuJCiZBlDXW+TioRoU11++Yx97T
+  host: ${MAIL_IP}
+  user: ${MAIL_USER}
+  password: ${MAIL_PASSWORD}
   port: 25
   from: noreply@phonepe.com
 
