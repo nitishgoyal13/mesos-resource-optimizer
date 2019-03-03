@@ -56,5 +56,8 @@ public class OptimizerServer extends Application<OptimizerConfig> {
         timer.scheduleAtFixedRate(hystrixThreadPoolService,
                 hystrixThreadPoolConfig.getInitialDelayInSeconds() * 1000,
                 hystrixThreadPoolConfig.getIntervalInSeconds() * 1000);
+
+        environment.lifecycle()
+                .manage(mailSender);
     }
 }

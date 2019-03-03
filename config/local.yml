@@ -15,7 +15,7 @@ threadPoolConfig:
   thresholdUsagePercentage: 60
   maxUsagePercentage: 80
   queryDurationInHours: 72
-  initialDelayInSeconds: 1
+  initialDelayInSeconds: 2
   intervalInSeconds: 86400
 
 serviceConfigs:
