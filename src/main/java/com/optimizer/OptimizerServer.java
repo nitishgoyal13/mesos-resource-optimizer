@@ -36,17 +36,13 @@ public class OptimizerServer extends Application<OptimizerConfig> {
         if(hystrixThreadPoolConfig == null) {
             hystrixThreadPoolConfig = new ThreadPoolConfig();
         }
+
         GrafannaConfig grafannaConfig = configuration.getGrafannaConfig();
-        GrafanaService grafanaService = GrafanaService.builder()
-                .client(httpClient)
-                .grafannaConfig(grafannaConfig)
-                .build();
-        //TODO Comment : Always try to use builder pattern over new
-        HystrixThreadPoolService hystrixThreadPoolService = HystrixThreadPoolService.builder()
-                .client(httpClient)
-                .grafanaService(grafanaService)
-                .threadPoolConfig(hystrixThreadPoolConfig)
-                .build();
+        GrafanaService grafanaService = new GrafanaService(httpClient, grafannaConfig);
+
+        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(httpClient, grafanaService,
+                                                                                         hystrixThreadPoolConfig
+        );
 
         //TODO This should happen through a job
         hystrixThreadPoolService.handleHystrixPools();

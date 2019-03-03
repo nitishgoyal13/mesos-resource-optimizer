@@ -18,5 +18,29 @@ public class ThreadPoolConfig {
 
     private int maxUsagePercentage = 80;
 
-    private int queryDuration = 72;
+    private int queryDurationInHours = 72;
+
+    public int getThresholdUsagePercentage() {
+        return thresholdUsagePercentage;
+    }
+
+    public void setThresholdUsagePercentage(int thresholdUsagePercentage) {
+        this.thresholdUsagePercentage = thresholdUsagePercentage;
+    }
+
+    public int getMaxUsagePercentage() {
+        return maxUsagePercentage;
+    }
+
+    public void setMaxUsagePercentage(int maxUsagePercentage) {
+        this.maxUsagePercentage = maxUsagePercentage;
+    }
+
+    public int getQueryDurationInHours() {
+        return queryDurationInHours;
+    }
+
+    public void setQueryDurationInHours(int queryDurationInHours) {
+        this.queryDurationInHours = queryDurationInHours;
+    }
 }

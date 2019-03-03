@@ -24,7 +24,6 @@ import static com.optimizer.util.OptimizerUtils.*;
  Created by mudit.g on Feb, 2019
  ***/
 @Builder
-@AllArgsConstructor
 public class GrafanaService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GrafanaService.class.getSimpleName());
@@ -32,6 +31,11 @@ public class GrafanaService {
 
     private HttpClient client;
     private GrafannaConfig grafannaConfig;
+
+    public GrafanaService(HttpClient client, GrafannaConfig grafannaConfig) {
+        this.client = client;
+        this.grafannaConfig = grafannaConfig;
+    }
 
     public List<HttpResponse> execute(List<String> queries) {
         List<HttpResponse> responses = new ArrayList<>();

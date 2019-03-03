@@ -3,9 +3,7 @@ package com.optimizer.threadpool;
 import com.collections.CollectionUtils;
 import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
@@ -24,7 +22,6 @@ import static com.optimizer.util.OptimizerUtils.*;
  Created by mudit.g on Feb, 2019
  ***/
 @Builder
-@AllArgsConstructor
 public class HystrixThreadPoolService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
@@ -33,6 +30,12 @@ public class HystrixThreadPoolService {
     private HttpClient client;
     private GrafanaService grafanaService;
     private ThreadPoolConfig threadPoolConfig;
+
+    public HystrixThreadPoolService(HttpClient client, GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig) {
+        this.client = client;
+        this.grafanaService = grafanaService;
+        this.threadPoolConfig = threadPoolConfig;
+    }
 
     public void handleHystrixPools() {
         Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(CLUSTER_NAME);
@@ -47,7 +50,7 @@ public class HystrixThreadPoolService {
                 continue;
             }
 
-            Map<String, Integer> hystrixPoolVsCorePool = poolCore(hystrixPools);
+            Map<String, Integer> hystrixPoolVsCorePool = corePool(hystrixPools);
             if(CollectionUtils.isEmpty(hystrixPoolVsCorePool)) {
                 LOGGER.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
                 continue;
@@ -61,9 +64,9 @@ public class HystrixThreadPoolService {
             int corePool;
             int poolUsage;
             int totalCorePool = 0;
-            int reduceBy;
             int canBeFreed = 0;
             for(String hystrixPool : hystrixPools) {
+                int reduceBy = 0;
                 pool = hystrixPool;
                 if(hystrixPoolVsCorePool.containsKey(pool)) {
                     corePool = hystrixPoolVsCorePool.get(pool);
@@ -81,11 +84,9 @@ public class HystrixThreadPoolService {
                     continue;
                 }
                 totalCorePool += corePool;
-                int usagePercentage = (int)((poolUsage * 100.0f) / corePool);
+                int usagePercentage = poolUsage * 100 / corePool;
                 if(usagePercentage < threadPoolConfig.getThresholdUsagePercentage()) {
-                    reduceBy = (int)((corePool * threadPoolConfig.getMaxUsagePercentage() * 1.0f) / 100) - poolUsage;
-                } else {
-                    reduceBy = 0;
+                    reduceBy = ((corePool * threadPoolConfig.getMaxUsagePercentage()) / 100) - poolUsage;
                 }
                 canBeFreed += reduceBy;
                 LOGGER.info(String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s", serviceName, pool, corePool,
@@ -97,13 +98,13 @@ public class HystrixThreadPoolService {
         }
     }
 
-    private Map<String, Integer> poolCore(List<String> hystrixPools) {
+    private Map<String, Integer> corePool(List<String> hystrixPools) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
-            String poolCoreQuery = String.format(CORE_POOL_QUERY, CLUSTER_NAME, hystrixPool,
-                                                 Integer.toString(threadPoolConfig.getQueryDuration())
+            String corePoolQuery = String.format(CORE_POOL_QUERY, CLUSTER_NAME, hystrixPool,
+                                                 Integer.toString(threadPoolConfig.getQueryDurationInHours())
                                                 );
-            queries.add(poolCoreQuery);
+            queries.add(corePoolQuery);
         }
         Map<String, Integer> responses;
         try {
@@ -123,7 +124,7 @@ public class HystrixThreadPoolService {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
             String poolUsageQuery = String.format(POOL_USAGE_QUERY, CLUSTER_NAME, hystrixPool,
-                                                  Integer.toString(threadPoolConfig.getQueryDuration())
+                                                  Integer.toString(threadPoolConfig.getQueryDurationInHours())
                                                  );
             queries.add(poolUsageQuery);
         }
