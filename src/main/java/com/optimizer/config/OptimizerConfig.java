@@ -1,26 +1,47 @@
 package com.optimizer.config;
 
+import com.optimizer.grafana.config.GrafannaConfig;
+import com.optimizer.mail.config.MailConfig;
+import com.optimizer.threadpool.config.ThreadPoolConfig;
 import io.dropwizard.Configuration;
 import io.dropwizard.riemann.RiemannConfig;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /***
  Created by nitish.goyal on 19/02/19
  ***/
+@EqualsAndHashCode(callSuper = true)
 @Data
+@AllArgsConstructor
 public class OptimizerConfig extends Configuration {
 
-
-    @NotNull
-    @Valid
     private RiemannConfig riemann;
 
     private List<ServiceConfig> serviceConfigs;
 
     private GrafannaConfig grafannaConfig;
 
+    private ThreadPoolConfig threadPoolConfig;
+
+    private MailConfig mail;
+
+    public RiemannConfig getRiemann() {
+        return riemann;
+    }
+
+    public List<ServiceConfig> getServiceConfigs() {
+        return serviceConfigs;
+    }
+
+    public GrafannaConfig getGrafannaConfig() {
+        return grafannaConfig;
+    }
+
+    public ThreadPoolConfig getThreadPoolConfig() {
+        return threadPoolConfig;
+    }
 }

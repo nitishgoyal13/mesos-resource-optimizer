@@ -1,0 +1,35 @@
+server:
+  applicationConnectors:
+    - type: http
+      port: 17000
+  adminConnectors:
+    - type: http
+      port: 17001
+
+grafannaConfig:
+  headers:
+    - name: Authorization
+      value: Bearer eyJrIjoiWkxRWEJPS3ZUNURUbTlsQ2VEalVQUGpLSDhZZW9RMGgiLCJuIjoib3B0aW1pemVyIiwiaWQiOjF9
+
+threadPoolConfig:
+  thresholdUsagePercentage: 60
+  maxUsagePercentage: 80
+  queryDurationInHours: 72
+  initialDelayInSeconds: 2
+  intervalInSeconds: 86400
+
+serviceConfigs:
+  - service: foxtrot-config
+    ownerEmail: mudit.g@phonepe.com
+  - service: symphony-irctc-pool
+    ownerEmail: mudit.g@phonepe.com
+
+mail:
+  host: ${MAIL_IP}
+  user: ${MAIL_USER}
+  password: ${MAIL_PASSWORD}
+  port: 25
+  from: noreply@phonepe.com
+
+logging:
+  level: INFO
