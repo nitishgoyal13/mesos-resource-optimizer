@@ -60,12 +60,12 @@ public class HystrixThreadPoolService extends TimerTask {
             return;
         }
 
-        Map<String, Integer> hystrixPoolVsCorePool = corePool(hystrixPools);
+        Map<String, Integer> hystrixPoolVsCorePool = executePoolQuery(hystrixPools, CORE_POOL_QUERY, CLUSTER_NAME);
         if(CollectionUtils.isEmpty(hystrixPoolVsCorePool)) {
             LOGGER.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
             return;
         }
-        Map<String, Integer> hystrixPoolVsPoolsUsage = poolUsage(hystrixPools);
+        Map<String, Integer> hystrixPoolVsPoolsUsage = executePoolQuery(hystrixPools, POOL_USAGE_QUERY, CLUSTER_NAME);
         if(CollectionUtils.isEmpty(hystrixPoolVsPoolsUsage)) {
             LOGGER.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = []");
             return;
@@ -109,45 +109,23 @@ public class HystrixThreadPoolService extends TimerTask {
         LOGGER.info(String.format("Service: %s Type: HYSTRIX Total: %s Free: %s", serviceName, totalCorePool, canBeFreed));
     }
 
-    private Map<String, Integer> corePool(List<String> hystrixPools) {
+    private Map<String, Integer> executePoolQuery(List<String> hystrixPools, String query, String clusterName) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
-            String corePoolQuery = String.format(CORE_POOL_QUERY, CLUSTER_NAME, hystrixPool,
-                                                 Integer.toString(threadPoolConfig.getQueryDurationInHours())
-                                                );
-            queries.add(corePoolQuery);
+            String poolQuery = String.format(query, clusterName, hystrixPool,
+                    Integer.toString(threadPoolConfig.getQueryDurationInHours())
+            );
+            queries.add(poolQuery);
         }
         Map<String, Integer> responses;
         try {
             responses = executeGrafanaQueries(queries, hystrixPools);
             if(CollectionUtils.isEmpty(responses)) {
-                LOGGER.error("Error in getting pool core grafana response. Got grafanaResponse = []");
+                LOGGER.error("Error in executing grafana queries. Got grafanaResponse = []");
                 return Collections.emptyMap();
             }
         } catch (Exception e) {
-            LOGGER.error("Error in running pool core grafana queries: " + e.getMessage(), e);
-            return Collections.emptyMap();
-        }
-        return responses;
-    }
-
-    private Map<String, Integer> poolUsage(List<String> hystrixPools) {
-        List<String> queries = new ArrayList<>();
-        for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
-            String poolUsageQuery = String.format(POOL_USAGE_QUERY, CLUSTER_NAME, hystrixPool,
-                                                  Integer.toString(threadPoolConfig.getQueryDurationInHours())
-                                                 );
-            queries.add(poolUsageQuery);
-        }
-        Map<String, Integer> responses;
-        try {
-            responses = executeGrafanaQueries(queries, hystrixPools);
-            if(CollectionUtils.isEmpty(responses)) {
-                LOGGER.error("Error in getting pool core grafana response. Got grafanaResponse = []");
-                return Collections.emptyMap();
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error in running pool core grafana queries: " + e.getMessage(), e);
+            LOGGER.error("Error in executing grafana queries: " + e.getMessage(), e);
             return Collections.emptyMap();
         }
         return responses;
