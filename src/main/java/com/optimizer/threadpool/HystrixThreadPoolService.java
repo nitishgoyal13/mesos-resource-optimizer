@@ -21,7 +21,7 @@ import static com.optimizer.util.OptimizerUtils.*;
 /***
  Created by mudit.g on Feb, 2019
  ***/
-public class HystrixThreadPoolService extends TimerTask {
+public class HystrixThreadPoolService implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
     private static final String CLUSTER_NAME = "api";
@@ -30,6 +30,7 @@ public class HystrixThreadPoolService extends TimerTask {
     private ThreadPoolConfig threadPoolConfig;
     private List<ServiceConfig> serviceConfigs;
     private MailSender mailSender;
+    private Map<String, String> serviceVsOwnerMap;
 
     public HystrixThreadPoolService(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig, MailSender mailSender,
                                     List<ServiceConfig> serviceConfigs) {
@@ -37,6 +38,7 @@ public class HystrixThreadPoolService extends TimerTask {
         this.threadPoolConfig = threadPoolConfig;
         this.mailSender = mailSender;
         this.serviceConfigs = serviceConfigs;
+        this.serviceVsOwnerMap = createserviceVsOwnerMap(serviceConfigs);
     }
 
     @Override
@@ -46,11 +48,13 @@ public class HystrixThreadPoolService extends TimerTask {
             LOGGER.error("Error in getting serviceVsPoolList. Got empty map");
             return;
         }
-        serviceConfigs.forEach(serviceConfig -> {
-            if(serviceVsPoolList.containsKey(serviceConfig.getService())) {
-                handleHystrixPool(serviceConfig.getService(), serviceVsPoolList, serviceConfig.getOwnerEmail());
+        for(String service : CollectionUtils.nullAndEmptySafeValueList(serviceVsPoolList.keySet())) {
+            String ownerEmail = DEFAULT_EMAIL;
+            if(serviceVsOwnerMap.containsKey(service)) {
+                ownerEmail = serviceVsOwnerMap.get(service);
             }
-        });
+            handleHystrixPool(service, serviceVsPoolList, ownerEmail);
+        }
     }
 
     private void handleHystrixPool(String serviceName, Map<String, List<String>> serviceVsPoolList, String ownerEmail) {
@@ -168,6 +172,14 @@ public class HystrixThreadPoolService extends TimerTask {
             return (int)valuesJSONArray.get(INDEX_ONE);
         }
         return NULL_VALUE;
+    }
+
+    private Map<String, String> createserviceVsOwnerMap(List<ServiceConfig> serviceConfigs) {
+        Map<String, String> serviceVsOwnerMap = new HashMap<>();
+        serviceConfigs.forEach(serviceConfig ->
+            serviceVsOwnerMap.put(serviceConfig.getService(), serviceConfig.getOwnerEmail())
+        );
+        return serviceVsOwnerMap;
     }
 
 }

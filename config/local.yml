@@ -13,9 +13,8 @@ grafannaConfig:
 
 threadPoolConfig:
   thresholdUsagePercentage: 60
-  maxUsagePercentage: 80
   queryDurationInHours: 72
-  initialDelayInSeconds: 2
+  initialDelayInSeconds: 100
   intervalInSeconds: 86400
 
 serviceConfigs:
