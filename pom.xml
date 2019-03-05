@@ -9,9 +9,9 @@
     <packaging>pom</packaging>
     <version>1.1-SNAPSHOT</version>
    
-    <name>Thread Pool Optimizer</name>
+    <name>Optimizer</name>
     <description>
-        Manages the thread pool of various services
+        Manages the resources of any service
     </description>
 
     <developers>
@@ -245,6 +245,19 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>delombok</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <version>1.16.18.0</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

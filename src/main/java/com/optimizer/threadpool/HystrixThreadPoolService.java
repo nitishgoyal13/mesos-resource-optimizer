@@ -2,9 +2,9 @@ package com.optimizer.threadpool;
 
 import com.collections.CollectionUtils;
 import com.optimizer.config.ServiceConfig;
-import com.optimizer.threadpool.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.mail.MailSender;
+import com.optimizer.threadpool.config.ThreadPoolConfig;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
@@ -31,8 +31,8 @@ public class HystrixThreadPoolService extends TimerTask {
     private List<ServiceConfig> serviceConfigs;
     private MailSender mailSender;
 
-    public HystrixThreadPoolService(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig,
-                                    MailSender mailSender, List<ServiceConfig> serviceConfigs) {
+    public HystrixThreadPoolService(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig, MailSender mailSender,
+                                    List<ServiceConfig> serviceConfigs) {
         this.grafanaService = grafanaService;
         this.threadPoolConfig = threadPoolConfig;
         this.mailSender = mailSender;
@@ -96,15 +96,14 @@ public class HystrixThreadPoolService extends TimerTask {
             totalCorePool += corePool;
             int usagePercentage = poolUsage * 100 / corePool;
             if(usagePercentage < threadPoolConfig.getThresholdUsagePercentage()) {
-                reduceBy = ((corePool * threadPoolConfig.getMaxUsagePercentage()) / 100) - poolUsage;
-                mailSender.send(MAIL_SUBJECT,
-                        getMailBody(serviceName, pool, corePool, poolUsage, reduceBy), ownerEmail);
+                reduceBy = ((corePool * threadPoolConfig.getThresholdUsagePercentage()) / 100) - poolUsage;
+                mailSender.send(MAIL_SUBJECT, getMailBody(serviceName, pool, corePool, poolUsage, reduceBy), ownerEmail);
             }
             canBeFreed += reduceBy;
-            LOGGER.info(String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s", serviceName,
-                    pool, corePool,
-                    poolUsage, reduceBy
-            ));
+            LOGGER.info(
+                    String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s", serviceName, pool, corePool, poolUsage,
+                                  reduceBy
+                                 ));
         }
         LOGGER.info(String.format("Service: %s Type: HYSTRIX Total: %s Free: %s", serviceName, totalCorePool, canBeFreed));
     }
@@ -112,9 +111,7 @@ public class HystrixThreadPoolService extends TimerTask {
     private Map<String, Integer> executePoolQuery(List<String> hystrixPools, String query, String clusterName) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
-            String poolQuery = String.format(query, clusterName, hystrixPool,
-                    Integer.toString(threadPoolConfig.getQueryDurationInHours())
-            );
+            String poolQuery = String.format(query, clusterName, hystrixPool, Integer.toString(threadPoolConfig.getQueryDurationInHours()));
             queries.add(poolQuery);
         }
         Map<String, Integer> responses;

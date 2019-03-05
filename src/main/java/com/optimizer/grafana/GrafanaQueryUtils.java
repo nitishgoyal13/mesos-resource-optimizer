@@ -8,5 +8,6 @@ public class GrafanaQueryUtils {
 
     public static final String POOL_LIST_QUERY =
             "SHOW MEASUREMENTS with measurement = /phonepe.prod.%s.HystrixThreadPool.*.propertyValue_corePoolSize/";
+
     public static final String POOL_LIST_PATTERN = "phonepe.prod.%s.HystrixThreadPool.(.*).propertyValue_corePoolSize";
 }
