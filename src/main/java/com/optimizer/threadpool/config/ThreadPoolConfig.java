@@ -16,8 +16,6 @@ public class ThreadPoolConfig {
 
     private int thresholdUsagePercentage = 60;
 
-    private int maxUsagePercentage = 80;
-
     private int queryDurationInHours = 72;
 
     private int initialDelayInSeconds = 1;

@@ -5,6 +5,7 @@ import com.optimizer.config.ServiceConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.grafana.config.GrafannaConfig;
 import com.optimizer.mail.MailSender;
+import com.optimizer.resources.ThreadPoolResource;
 import com.optimizer.threadpool.HystrixThreadPoolService;
 import com.optimizer.threadpool.config.ThreadPoolConfig;
 import io.dropwizard.Application;
@@ -15,6 +16,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.util.List;
 import java.util.Timer;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /***
@@ -43,9 +46,6 @@ public class OptimizerServer extends Application<OptimizerConfig> {
             hystrixThreadPoolConfig = ThreadPoolConfig.builder()
                     .build();
         }
-        //TODO Why do we need this. We should optimize all the pools. And whenever we don't have a mapping for the email, we can send the
-        // email to the default email id
-        //If we don't do this, we will have to keep updating our config for the new pools
         List<ServiceConfig> serviceConfigs = configuration.getServiceConfigs();
         MailSender mailSender = new MailSender(configuration.getMail());
 
@@ -59,16 +59,16 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                                                                                          mailSender, serviceConfigs
         );
 
-        //TODO Instead of timer, use scheduledThreadPool executor. Timer thread dies in case of exception
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(hystrixThreadPoolService,
-                                  hystrixThreadPoolConfig.getInitialDelayInSeconds() * TimeUnit.SECONDS.toMillis(1),
-                                  hystrixThreadPoolConfig.getIntervalInSeconds() * TimeUnit.SECONDS.toMillis(1)
-                                 );
-
-        //TODO Also expose an API to trigger this from outside. It will help us debug in stage or prod
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2);
+        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolService,
+                        hystrixThreadPoolConfig.getInitialDelayInSeconds(),
+                        hystrixThreadPoolConfig.getIntervalInSeconds(),
+                        TimeUnit.SECONDS);
 
         environment.lifecycle()
                 .manage(mailSender);
+
+        environment.jersey()
+                .register(new ThreadPoolResource(hystrixThreadPoolService));
     }
 }

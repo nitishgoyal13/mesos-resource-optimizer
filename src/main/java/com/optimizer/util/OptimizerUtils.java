@@ -30,6 +30,7 @@ public class OptimizerUtils {
     public static final int STATUS_OK_RANGE_START = 200;
     public static final int STATUS_OK_RANGE_END = 300;
     public static final String MAIL_SUBJECT = "Thread Pool Optimization";
+    public static final String DEFAULT_EMAIL = "mudit.g@phonepe.com, nitish.goyal@phonepe.com";
 
     private static HttpResponse executeGetRequest(HttpClient client, String query,
                                                   GrafannaConfig grafannaConfig) throws Exception {
