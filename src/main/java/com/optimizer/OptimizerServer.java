@@ -14,8 +14,9 @@ import io.dropwizard.setup.Environment;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +29,7 @@ public class OptimizerServer extends Application<OptimizerConfig> {
     @Override
     public void initialize(Bootstrap<OptimizerConfig> bootstrap) {
 
+        //TODO Integration with configservice and deploy it in stage
         /*bootstrap.addBundle(new RiemannBundle<OptimizerConfig>() {
             @Override
             public RiemannConfig getRiemannConfiguration(OptimizerConfig configuration) {
@@ -54,21 +56,31 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .grafannaConfig(grafannaConfig)
                 .client(httpClient)
                 .build();
+        Map<String, String> serviceVsOwnerMap = createServiceVsOwnerMap(serviceConfigs);
+        HystrixThreadPoolService hystrixThreadPoolService = HystrixThreadPoolService.builder()
+                .grafanaService(grafanaService)
+                .threadPoolConfig(hystrixThreadPoolConfig)
+                .mailSender(mailSender)
+                .serviceVsOwnerMap(serviceVsOwnerMap)
+                .build();
 
-        HystrixThreadPoolService hystrixThreadPoolService = new HystrixThreadPoolService(grafanaService, hystrixThreadPoolConfig,
-                                                                                         mailSender, serviceConfigs
-        );
-
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2);
-        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolService,
-                        hystrixThreadPoolConfig.getInitialDelayInSeconds(),
-                        hystrixThreadPoolConfig.getIntervalInSeconds(),
-                        TimeUnit.SECONDS);
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
+                                                     hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+                                                    );
+        //TODO Delete later
+        hystrixThreadPoolService.run();
 
         environment.lifecycle()
                 .manage(mailSender);
 
         environment.jersey()
                 .register(new ThreadPoolResource(hystrixThreadPoolService));
+    }
+
+    private Map<String, String> createServiceVsOwnerMap(List<ServiceConfig> serviceConfigs) {
+        Map<String, String> serviceVsOwnerMap = new HashMap<>();
+        serviceConfigs.forEach(serviceConfig -> serviceVsOwnerMap.put(serviceConfig.getService(), serviceConfig.getOwnerEmail()));
+        return serviceVsOwnerMap;
     }
 }

@@ -24,11 +24,11 @@ serviceConfigs:
     ownerEmail: mudit.g@phonepe.com
 
 mail:
-  host: ${MAIL_IP}
-  user: ${MAIL_USER}
-  password: ${MAIL_PASSWORD}
-  port: 25
   from: noreply@phonepe.com
+  host: ops-jump001.phonepe.nm1
+  port: 25
+  user: AKIAJLCWHAOEDK4ZDOGQ
+  password: AgjCxNI68hrnj6bIzuJCiZBlDXW+TioRoU11++Yx97
 
 logging:
   level: INFO
