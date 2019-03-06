@@ -103,13 +103,20 @@ public class HystrixThreadPoolService implements Runnable {
             int usagePercentage = poolUsage * 100 / corePool;
             if(usagePercentage < threadPoolConfig.getThresholdUsagePercentage()) {
                 reduceBy = ((corePool * threadPoolConfig.getThresholdUsagePercentage()) / 100) - poolUsage;
-                mailSender.send(MAIL_SUBJECT, getMailBody(serviceName, pool, corePool, poolUsage, reduceBy), ownerEmail);
+                if(reduceBy != 0) {
+                    mailSender.send(MAIL_SUBJECT, getMailBody(serviceName, pool, corePool, poolUsage, reduceBy), ownerEmail);
+                }
             }
             canBeFreed += reduceBy;
             LOGGER.info(
                     String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s", serviceName, pool, corePool, poolUsage,
                                   reduceBy
                                  ));
+            try {
+                Thread.sleep(30000);
+            } catch (Exception e) {
+                LOGGER.error("Error in thread sleep: " + e);
+            }
         }
         LOGGER.info(String.format("Service: %s Type: HYSTRIX Total: %s Free: %s", serviceName, totalCorePool, canBeFreed));
     }
