@@ -1,10 +1,11 @@
 package com.optimizer.threadpool;
 
 import com.collections.CollectionUtils;
-import com.optimizer.config.ServiceConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.mail.MailSender;
 import com.optimizer.threadpool.config.ThreadPoolConfig;
+import lombok.Builder;
+import lombok.Data;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
@@ -21,6 +22,8 @@ import static com.optimizer.util.OptimizerUtils.*;
 /***
  Created by mudit.g on Feb, 2019
  ***/
+@Builder
+@Data
 public class HystrixThreadPoolService implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
@@ -28,17 +31,16 @@ public class HystrixThreadPoolService implements Runnable {
 
     private GrafanaService grafanaService;
     private ThreadPoolConfig threadPoolConfig;
-    private List<ServiceConfig> serviceConfigs;
     private MailSender mailSender;
     private Map<String, String> serviceVsOwnerMap;
 
+    @Builder
     public HystrixThreadPoolService(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig, MailSender mailSender,
-                                    List<ServiceConfig> serviceConfigs) {
+                                    Map<String, String> serviceVsOwnerMap) {
         this.grafanaService = grafanaService;
         this.threadPoolConfig = threadPoolConfig;
         this.mailSender = mailSender;
-        this.serviceConfigs = serviceConfigs;
-        this.serviceVsOwnerMap = createserviceVsOwnerMap(serviceConfigs);
+        this.serviceVsOwnerMap = serviceVsOwnerMap;
     }
 
     @Override
@@ -174,12 +176,5 @@ public class HystrixThreadPoolService implements Runnable {
         return NULL_VALUE;
     }
 
-    private Map<String, String> createserviceVsOwnerMap(List<ServiceConfig> serviceConfigs) {
-        Map<String, String> serviceVsOwnerMap = new HashMap<>();
-        serviceConfigs.forEach(serviceConfig ->
-            serviceVsOwnerMap.put(serviceConfig.getService(), serviceConfig.getOwnerEmail())
-        );
-        return serviceVsOwnerMap;
-    }
 
 }
