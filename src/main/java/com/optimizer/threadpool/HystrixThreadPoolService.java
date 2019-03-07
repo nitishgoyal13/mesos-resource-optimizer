@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static com.optimizer.threadpool.ThreadPoolQueryUtils.CORE_POOL_QUERY;
+import static com.optimizer.threadpool.ThreadPoolQueryUtils.MAX_POOL_QUERY;
 import static com.optimizer.threadpool.ThreadPoolQueryUtils.POOL_USAGE_QUERY;
 import static com.optimizer.util.OptimizerUtils.*;
 
@@ -66,7 +66,7 @@ public class HystrixThreadPoolService implements Runnable {
             return;
         }
 
-        Map<String, Integer> hystrixPoolVsCorePool = executePoolQuery(hystrixPools, CORE_POOL_QUERY, CLUSTER_NAME);
+        Map<String, Integer> hystrixPoolVsCorePool = executePoolQuery(hystrixPools, MAX_POOL_QUERY, CLUSTER_NAME);
         if(CollectionUtils.isEmpty(hystrixPoolVsCorePool)) {
             LOGGER.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
             return;
@@ -103,8 +103,8 @@ public class HystrixThreadPoolService implements Runnable {
             int usagePercentage = poolUsage * 100 / corePool;
             if(usagePercentage < threadPoolConfig.getThresholdUsagePercentage()) {
                 reduceBy = ((corePool * threadPoolConfig.getThresholdUsagePercentage()) / 100) - poolUsage;
-                if(reduceBy != 0) {
-                    mailSender.send(MAIL_SUBJECT, getMailBody(serviceName, pool, corePool, poolUsage, reduceBy), ownerEmail);
+                if(reduceBy > threadPoolConfig.getReduceByThreshold()) {
+                    mailSender.send(MAIL_SUBJECT, getMailBody(serviceName, pool, corePool, poolUsage, reduceBy, ownerEmail), ownerEmail);
                 }
             }
             canBeFreed += reduceBy;
@@ -112,11 +112,6 @@ public class HystrixThreadPoolService implements Runnable {
                     String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s", serviceName, pool, corePool, poolUsage,
                                   reduceBy
                                  ));
-            try {
-                Thread.sleep(30000);
-            } catch (Exception e) {
-                LOGGER.error("Error in thread sleep: " + e);
-            }
         }
         LOGGER.info(String.format("Service: %s Type: HYSTRIX Total: %s Free: %s", serviceName, totalCorePool, canBeFreed));
     }
@@ -176,11 +171,7 @@ public class HystrixThreadPoolService implements Runnable {
         JSONArray seriesJSONArray = getArrayFromJSONObject(jsonObject, SERIES);
         JSONObject seriesJSONObject = getObjectFromJSONArray(seriesJSONArray, INDEX_ZERO);
         JSONArray valuesJSONArray = getArrayFromJSONObject(seriesJSONObject, VALUES);
-        valuesJSONArray = getArrayFromJSONArray(valuesJSONArray, INDEX_ZERO);
-        if(valuesJSONArray != null && valuesJSONArray.length() > 1 && valuesJSONArray.get(INDEX_ONE) instanceof Integer) {
-            return (int)valuesJSONArray.get(INDEX_ONE);
-        }
-        return NULL_VALUE;
+        return getMaxValueFromJsonArray(valuesJSONArray);
     }
 
 

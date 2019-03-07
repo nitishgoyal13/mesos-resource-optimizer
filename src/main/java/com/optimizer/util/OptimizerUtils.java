@@ -19,7 +19,7 @@ public class OptimizerUtils {
     public static final String QUERY = "%s;";
     private static final Logger LOGGER = LoggerFactory.getLogger(OptimizerUtils.class);
 
-    private static final String URL_TEMPLATE = "http://prd-grafana001.phonepe.nm1/api/datasources/proxy/1/query?db=riemann_metrics&q=%s";
+    private static final String URL_TEMPLATE = "http://prd-grafana001.phonepe.nm1/api/datasources/proxy/10/query?db=riemann_metrics&q=%s";
     private static final String ENCODING = "UTF-8";
     public static final String RESULTS = "results";
     public static final String SERIES = "series";
@@ -32,8 +32,7 @@ public class OptimizerUtils {
     public static final String MAIL_SUBJECT = "Thread Pool Optimization";
     public static final String DEFAULT_EMAIL = "mudit.g@phonepe.com, nitish.goyal@phonepe.com";
 
-    private static HttpResponse executeGetRequest(HttpClient client, String query,
-                                                  GrafannaConfig grafannaConfig) throws Exception {
+    private static HttpResponse executeGetRequest(HttpClient client, String query, GrafannaConfig grafannaConfig) throws Exception {
         String encodedQuery = URLEncoder.encode(query, ENCODING);
         String url = String.format(URL_TEMPLATE, encodedQuery);
         HttpGet request = new HttpGet(url);
@@ -53,23 +52,33 @@ public class OptimizerUtils {
 
     public static JSONArray getArrayFromJSONObject(JSONObject jsonObject, String key) {
         if(jsonObject != null && jsonObject.has(key)) {
-            return (JSONArray) jsonObject.get(key);
+            return (JSONArray)jsonObject.get(key);
         }
         return null;
     }
 
     public static JSONObject getObjectFromJSONArray(JSONArray jsonArray, int index) {
         if(jsonArray != null && jsonArray.length() > index) {
-            return (JSONObject) jsonArray.get(index);
+            return (JSONObject)jsonArray.get(index);
         }
         return null;
     }
 
-    public static JSONArray getArrayFromJSONArray(JSONArray jsonArray, int index) {
-        if(jsonArray != null && jsonArray.length() > index) {
-            return (JSONArray) jsonArray.get(index);
+    public static int getMaxValueFromJsonArray(JSONArray jsonArray) {
+        if(jsonArray == null) {
+            return NULL_VALUE;
         }
-        return null;
+        int maxValue = NULL_VALUE;
+        for(int index = 0; index < jsonArray.length(); index++) {
+            JSONArray array = (JSONArray)jsonArray.get(index);
+            if(array != null && array.length() > 1 && array.get(INDEX_ONE) instanceof Integer) {
+                if((int)array.get(INDEX_ONE) > maxValue) {
+                    maxValue = (int)array.get(INDEX_ONE);
+                }
+            }
+
+        }
+        return maxValue;
     }
 
     public static HttpResponse getHttpResponse(HttpClient client, String query, GrafannaConfig grafannaConfig) {
@@ -90,11 +99,14 @@ public class OptimizerUtils {
         }
     }
 
-    public static String getMailBody(String serviceName, String pool, int corePool, int poolUsage, int reduceBy) {
-        return "Hystrix Thread Pool can be optimized. <br>Service: " + serviceName +
-                " <br>HYSTRIX Pool: " + pool +
-                " <br> Core Pool: " + Integer.toString(corePool) +
-                " <br> Pool Usage: " + Integer.toString(poolUsage) +
-                " <br> Can be reduced by: " + Integer.toString(reduceBy);
+    public static String getMailBody(String serviceName, String pool, int corePool, int poolUsage, int reduceBy, String ownerEmail) {
+        //TODO Use stringbuilder her
+        return "Hi " + ownerEmail + " <br> Hystrix Thread Pool can be optimized. <br>Service: " + serviceName + " <br>HYSTRIX Pool: " +
+               pool +
+               " <br> Max " + "Pool: " + Integer.toString(corePool) + " <br> Pool Usage: " + Integer.toString(poolUsage) +
+               " <br> Can be reduced by: " + Integer.toString(reduceBy) +
+               " <br> Kindly reach out to Nitish(nitish.goyal@phonepe.com) for any queries or if you aren't " +
+               "the service owner for the mail received. Also, help me out figuring the service owner where service owner email is not " +
+               "defined";
     }
 }

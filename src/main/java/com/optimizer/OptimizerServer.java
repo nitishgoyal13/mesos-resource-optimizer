@@ -41,7 +41,10 @@ public class OptimizerServer extends Application<OptimizerConfig> {
 
     @Override
     public void run(OptimizerConfig configuration, Environment environment) throws Exception {
+        //TODO Use reuable connections here
         HttpClient httpClient = HttpClientBuilder.create()
+                .setMaxConnPerRoute(1000)
+                .setMaxConnTotal(1000)
                 .build();
         ThreadPoolConfig hystrixThreadPoolConfig = configuration.getThreadPoolConfig();
         if(hystrixThreadPoolConfig == null) {
@@ -64,15 +67,13 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .serviceVsOwnerMap(serviceVsOwnerMap)
                 .build();
 
+        environment.lifecycle()
+                .manage(mailSender);
+
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
                                                      hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
                                                     );
-        //TODO Delete later
-        hystrixThreadPoolService.run();
-
-        environment.lifecycle()
-                .manage(mailSender);
 
         environment.jersey()
                 .register(new ThreadPoolResource(hystrixThreadPoolService));

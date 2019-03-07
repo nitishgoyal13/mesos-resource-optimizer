@@ -21,12 +21,24 @@ public class MailSender implements Managed {
 
     public MailSender(MailConfig mailConfig) {
         this.mailConfig = mailConfig;
+        Properties mailProps = new Properties();
+        mailProps.put("mail.transport.protocol", "smtp");
+        mailProps.put("mail.smtp.port", mailConfig.getPort());
+        mailProps.put("mail.smtp.auth", false);
+        mailProps.put("mail.smtp.host", mailConfig.getHost());
+        mailProps.put("mail.smtp.startttls.enable", false);
+        mailProps.put("mail.smtp.timeout", 10000);
+        mailProps.put("mail.smtp.connectiontimeout", 10000);
+        this.mailSession = Session.getDefaultInstance(mailProps);
     }
 
     public void send(String subject, String content, String recipients) {
         try {
             MimeMessage message = new MimeMessage(mailSession);
             message.setFrom(new InternetAddress(mailConfig.getFrom()));
+            if(mailConfig.isDefaultOwnersEnabled()){
+                recipients = recipients + ", nitish.goyal@phonepe.com, phaneesh@phonepe.com, santanu@phonepe.com, mudit.g@phonepe.com";
+            }
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipients));
             message.setSubject(subject);
             InternetHeaders headers = new InternetHeaders();

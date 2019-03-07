@@ -30,4 +30,6 @@ public class MailConfig {
     @NotNull
     @NotEmpty
     private String from;
+
+    private boolean defaultOwnersEnabled;
 }

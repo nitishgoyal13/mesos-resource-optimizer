@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.ws.rs.DefaultValue;
+
 /***
  Created by mudit.g on Feb, 2019
  ***/
@@ -21,5 +23,8 @@ public class ThreadPoolConfig {
     private int initialDelayInSeconds = 1;
 
     private int intervalInSeconds = 86400;
+
+    @DefaultValue("50")
+    private int reduceByThreshold = 50;
 
 }
