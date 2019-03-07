@@ -22,7 +22,7 @@ serviceConfigs:
   - service: foxtrot-config
     ownerEmail: nitish.goyal@phonepe.com
   - service: tstore
-    ownerEmail: achanta.vamsi@phonepe.com
+    ownerEmail: achanta.vamsi@phonepe.com, tushar.naik@phonepe.com
   - service: foxtrot-config
     ownerEmail: nitish.goyal@phonepe.com
   - service: sessionServiceDb
@@ -42,13 +42,13 @@ serviceConfigs:
   - service: urlshortener
     ownerEmail: santanu@phonepe.com
   - service: external
-    ownerEmail: vibhor.singhal@phonepe.com, nishant_mittal@phonepe.com
+    ownerEmail: vibhor.singhal@phonepe.com, nishant_mittal@phonepe.com, merchant-core@phonepe.com
   - service: digigold_external_service_queries
     ownerEmail: santosh.patil@phonepe.com
   - service: feed-common
     ownerEmail: tushar.naik@phonepe.com
   - service: merchant-service-db
-    ownerEmail: vibhor.singhal@phonepe.com, nishant_mittal@phonepe.com
+    ownerEmail: vibhor.singhal@phonepe.com, nishant_mittal@phonepe.com, merchant-core@phonepe.com
   - service: sessionServiceProxy
     ownerEmail: sudhir.singh@phonepe.com
   - service: symphony-internal-pool
@@ -58,7 +58,7 @@ serviceConfigs:
   - service: mandate
     ownerEmail: durgaprasad.m@phonepe.com
   - service: payments
-    ownerEmail: rishabh@phonepe.com
+    ownerEmail: rishabh@phonepe.com, payments-dev@phonepe.com
   - service: users-db
     ownerEmail: tushar.naik@phonepe.com, shashank.g@phonepe.com
   - service: clockwork
@@ -76,7 +76,7 @@ serviceConfigs:
   - service: symphony-commute-pool
     ownerEmail: durgaprasad.m@phonepe.com
   - service: wallet
-    ownerEmail: rishabh@phonepe.com, tushar@phonepe.com
+    ownerEmail: rishabh@phonepe.com, tushar@phonepe.com, payments-dev@phonepe.com
   - service: sessionServiceOnboarding
     ownerEmail: sudhir.singh@phonepe.com
   - service: catalogue-pool
@@ -86,13 +86,13 @@ serviceConfigs:
   - service: scroll
     ownerEmail: tushar.naik@phonepe.com
   - service: mercedes
-    ownerEmail: mohammed.irfanulla@phonepe.com, nayanava.de@phonepe.com
+    ownerEmail: mohammed.irfanulla@phonepe.com, nayanava.de@phonepe.com, offers-oncall@phonepe.com
   - service: nexus_fulfill
     ownerEmail: sarang.shravagi@phonepe.com, santosh.patil@phonepe.com
   - service: mystique
     ownerEmail: santanu@phonepe.com
   - service: extwallet-meta
-    ownerEmail: rishabh@phonepe.com, tushar@phonepe.com
+    ownerEmail: rishabh@phonepe.com, tushar@phonepe.com, payments-dev@phonepe.com
   - service: hop
     ownerEmail: tushar.naik@phonepe.com, shashank.g@phonepe.com
   - service: banisher
@@ -104,7 +104,7 @@ serviceConfigs:
   - service: nexus_db_updates
     ownerEmail: sarang.shravagi@phonepe.com, santosh.patil@phonepe.com
   - service: mercedes-thread-pool
-    ownerEmail: mohammed.irfanulla@phonepe.com, nayanava.de@phonepe.com
+    ownerEmail: mohammed.irfanulla@phonepe.com, nayanava.de@phonepe.com, offers-oncall@phonepe.com
 
 mail:
   from: noreply@phonepe.com

@@ -100,13 +100,12 @@ public class OptimizerUtils {
     }
 
     public static String getMailBody(String serviceName, String pool, int corePool, int poolUsage, int reduceBy, String ownerEmail) {
-        //TODO Use stringbuilder her
-        return "Hi " + ownerEmail + " <br> Hystrix Thread Pool can be optimized. <br>Service: " + serviceName + " <br>HYSTRIX Pool: " +
-               pool +
-               " <br> Max " + "Pool: " + Integer.toString(corePool) + " <br> Pool Usage: " + Integer.toString(poolUsage) +
-               " <br> Can be reduced by: " + Integer.toString(reduceBy) +
+        //TODO Use stringbuilder here
+        return "Hi " + ownerEmail + " <br> Hystrix Thread Pool can be optimized. Thread pool usage is consistently below 50% in last 8 " +
+               "days. " + " <br>Service: " + serviceName + "" + " <br>HYSTRIX Pool: " + pool + " <br> Max " + "Pool: " + Integer.toString(
+                corePool) + " <br> Pool Usage: " + Integer.toString(poolUsage) + " <br> Can be reduced by: " + Integer.toString(reduceBy) +
                " <br> Kindly reach out to Nitish(nitish.goyal@phonepe.com) for any queries or if you aren't " +
                "the service owner for the mail received. Also, help me out figuring the service owner where service owner email is not " +
-               "defined";
+               "defined" + "<br> <br> Refer to the link http://prd-grafana001.phonepe.nm1/dashboard/db/api-thread-pools";
     }
 }
