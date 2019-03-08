@@ -11,8 +11,6 @@ import com.optimizer.threadpool.config.ThreadPoolConfig;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -41,11 +39,7 @@ public class OptimizerServer extends Application<OptimizerConfig> {
 
     @Override
     public void run(OptimizerConfig configuration, Environment environment) throws Exception {
-        //TODO Use reuable connections here
-        HttpClient httpClient = HttpClientBuilder.create()
-                .setMaxConnPerRoute(1000)
-                .setMaxConnTotal(1000)
-                .build();
+
         ThreadPoolConfig hystrixThreadPoolConfig = configuration.getThreadPoolConfig();
         if(hystrixThreadPoolConfig == null) {
             hystrixThreadPoolConfig = ThreadPoolConfig.builder()
@@ -57,7 +51,6 @@ public class OptimizerServer extends Application<OptimizerConfig> {
         GrafannaConfig grafannaConfig = configuration.getGrafannaConfig();
         GrafanaService grafanaService = GrafanaService.builder()
                 .grafannaConfig(grafannaConfig)
-                .client(httpClient)
                 .build();
         Map<String, String> serviceVsOwnerMap = createServiceVsOwnerMap(serviceConfigs);
         HystrixThreadPoolService hystrixThreadPoolService = HystrixThreadPoolService.builder()

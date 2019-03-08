@@ -2,6 +2,7 @@ package com.optimizer.grafana;
 
 import com.google.common.collect.Lists;
 import com.optimizer.grafana.config.GrafannaConfig;
+import com.optimizer.http.HttpClientFactory;
 import com.optimizer.util.OptimizerUtils;
 import lombok.Builder;
 import org.apache.http.HttpResponse;
@@ -31,8 +32,8 @@ public class GrafanaService {
     private HttpClient client;
     private GrafannaConfig grafannaConfig;
 
-    public GrafanaService(HttpClient client, GrafannaConfig grafannaConfig) {
-        this.client = client;
+    public GrafanaService(GrafannaConfig grafannaConfig) {
+        this.client = HttpClientFactory.getHttpClient();
         this.grafannaConfig = grafannaConfig;
     }
 
