@@ -76,7 +76,6 @@ public class OptimizerUtils {
                     maxValue = (int)array.get(INDEX_ONE);
                 }
             }
-
         }
         return maxValue;
     }
@@ -99,13 +98,21 @@ public class OptimizerUtils {
         }
     }
 
-    public static String getMailBody(String serviceName, String pool, int corePool, int poolUsage, int reduceBy, String ownerEmail) {
-        //TODO Use stringbuilder here
-        return "Hi " + ownerEmail + " <br> Hystrix Thread Pool can be optimized. Thread pool usage is consistently below 50% in last 8 " +
-               "days. " + " <br>Service: " + serviceName + "" + " <br>HYSTRIX Pool: " + pool + " <br> Max " + "Pool: " + Integer.toString(
-                corePool) + " <br> Pool Usage: " + Integer.toString(poolUsage) + " <br> Can be reduced by: " + Integer.toString(reduceBy) +
-               " <br> Kindly reach out to Nitish(nitish.goyal@phonepe.com) for any queries or if you aren't " +
-               "the service owner for the mail received. Also, help me out figuring the service owner where service owner email is not " +
-               "defined" + "<br> <br> Refer to the link http://prd-grafana001.phonepe.nm1/dashboard/db/api-thread-pools";
+    public static String getReduceByMailBody(String serviceName, String pool, int maxPool, int poolUsage, int reduceBy, String ownerEmail) {
+        return String.format("Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage is consistently below 50%% in last 8 days. " +
+                " <br>Service: %s  <br>HYSTRIX Pool: %s <br> Max Pool: %s <br> Pool Usage: %s <br> Can be reduced by: %s " +
+                " <br> Kindly reach out to Nitish(nitish.goyal@phonepe.com) for any queries or if you aren't " +
+                "the service owner for the mail received. Also, help me out figuring the service owner where service owner email is not " +
+                "defined" + "<br> <br> Refer to the link http://prd-grafana001.phonepe.nm1/dashboard/db/api-thread-pools",
+                ownerEmail, serviceName, pool, Integer.toString(maxPool), Integer.toString(poolUsage), Integer.toString(reduceBy));
+    }
+
+    public static String getExtendByMailBody(String serviceName, String pool, int maxPool, int poolUsage, int extendBy, String ownerEmail) {
+        return String.format("Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage is consistently above 50%% in last 8 days. " +
+                        " <br>Service: %s  <br>HYSTRIX Pool: %s <br> Max Pool: %s <br> Pool Usage: %s <br> Can be extended by: %s " +
+                        " <br> Kindly reach out to Nitish(nitish.goyal@phonepe.com) for any queries or if you aren't " +
+                        "the service owner for the mail received. Also, help me out figuring the service owner where service owner email is not " +
+                        "defined" + "<br> <br> Refer to the link http://prd-grafana001.phonepe.nm1/dashboard/db/api-thread-pools",
+                ownerEmail, serviceName, pool, Integer.toString(maxPool), Integer.toString(poolUsage), Integer.toString(extendBy));
     }
 }

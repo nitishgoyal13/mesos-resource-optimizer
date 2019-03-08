@@ -17,6 +17,7 @@ threadPoolConfig:
   initialDelayInSeconds: 2
   intervalInSeconds: 86400
   reduceByThreshold: 50
+  extendByThreshold: 50
 
 serviceConfigs:
   - service: foxtrot-config
