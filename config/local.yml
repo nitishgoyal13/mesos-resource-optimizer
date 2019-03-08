@@ -6,10 +6,12 @@ server:
     - type: http
       port: 17001
 
-grafannaConfig:
+grafanaConfig:
   headers:
     - name: Authorization
       value: Bearer eyJrIjoiWkxRWEJPS3ZUNURUbTlsQ2VEalVQUGpLSDhZZW9RMGgiLCJuIjoib3B0aW1pemVyIiwiaWQiOjF9
+  url: http://prd-grafana001.phonepe.nm1/api/datasources/proxy/10/query?db=riemann_metrics&q=%s
+  prefix: phonepe.prod.api.HystrixThreadPool
 
 threadPoolConfig:
   thresholdMinUsagePercentage: 50
@@ -108,13 +110,14 @@ serviceConfigs:
   - service: mercedes-thread-pool
     ownerEmail: mohammed.irfanulla@phonepe.com, nayanava.de@phonepe.com, offers-oncall@phonepe.com
 
-mail:
+mailConfig:
   from: noreply@phonepe.com
   host: ops-jump001.phonepe.nm1
   port: 25
   user: AKIAJLCWHAOEDK4ZDOGQ
   password: AgjCxNI68hrnj6bIzuJCiZBlDXW+TioRoU11++Yx97
   defaultOwnersEnabled: true
+  defaultOwnersEmails: nitish.goyal@phonepe.com
 
 logging:
   level: INFO

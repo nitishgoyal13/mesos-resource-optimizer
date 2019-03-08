@@ -1,7 +1,7 @@
 package com.optimizer.grafana;
 
 import com.google.common.collect.Lists;
-import com.optimizer.grafana.config.GrafannaConfig;
+import com.optimizer.grafana.config.GrafanaConfig;
 import com.optimizer.util.OptimizerUtils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,7 +33,7 @@ public class GrafanaService {
     private static final int PARTITION_SIZE = 20;
 
     private HttpClient client;
-    private GrafannaConfig grafannaConfig;
+    private GrafanaConfig grafanaConfig;
 
 
     public List<HttpResponse> execute(List<String> queries) {
@@ -41,7 +41,7 @@ public class GrafanaService {
         for(List<String> queryChunk : Lists.partition(queries, PARTITION_SIZE)) {
             String query = String.join(";", queryChunk);
             query = String.format(QUERY, query);
-            HttpResponse response = getHttpResponse(client, query, grafannaConfig);
+            HttpResponse response = getHttpResponse(client, query, grafanaConfig);
             responses.add(response);
             if(response == null) {
                 return Collections.emptyList();
@@ -53,10 +53,10 @@ public class GrafanaService {
     public Map<String, List<String>> getServiceVsPoolList(String clusterName) {
         Map<String, List<String>> serviceVsPoolList = new HashMap<>();
         try {
-            String poolListQuery = String.format(POOL_LIST_QUERY, clusterName);
+            String poolListQuery = String.format(POOL_LIST_QUERY, grafanaConfig.getPrefix());
             String query = String.format(QUERY, poolListQuery);
 
-            HttpResponse response = getHttpResponse(client, query, grafannaConfig);
+            HttpResponse response = getHttpResponse(client, query, grafanaConfig);
             if(response == null) {
                 return Collections.emptyMap();
             }
@@ -67,7 +67,7 @@ public class GrafanaService {
                 LOGGER.error("Error in getting value from data: " + data);
                 return Collections.emptyMap();
             }
-            String poolListPattern = String.format(POOL_LIST_PATTERN, clusterName);
+            String poolListPattern = String.format(POOL_LIST_PATTERN, grafanaConfig.getPrefix());
             Pattern pattern = Pattern.compile(poolListPattern);
             for(int i = 0; i < serviceJsonArray.length(); i++) {
                 String metrics = ((JSONArray)serviceJsonArray.get(i)).get(0)

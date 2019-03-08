@@ -2,7 +2,9 @@ package com.optimizer.threadpool;
 
 import com.collections.CollectionUtils;
 import com.optimizer.grafana.GrafanaService;
+import com.optimizer.grafana.config.GrafanaConfig;
 import com.optimizer.mail.MailSender;
+import com.optimizer.mail.config.MailConfig;
 import com.optimizer.threadpool.config.ThreadPoolConfig;
 import lombok.Builder;
 import lombok.Data;
@@ -33,14 +35,18 @@ public class HystrixThreadPoolService implements Runnable {
     private ThreadPoolConfig threadPoolConfig;
     private MailSender mailSender;
     private Map<String, String> serviceVsOwnerMap;
+    private MailConfig mailConfig;
+    private GrafanaConfig grafanaConfig;
 
     @Builder
     public HystrixThreadPoolService(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig, MailSender mailSender,
-                                    Map<String, String> serviceVsOwnerMap) {
+                                    Map<String, String> serviceVsOwnerMap, MailConfig mailConfig, GrafanaConfig grafanaConfig) {
         this.grafanaService = grafanaService;
         this.threadPoolConfig = threadPoolConfig;
         this.mailSender = mailSender;
         this.serviceVsOwnerMap = serviceVsOwnerMap;
+        this.mailConfig = mailConfig;
+        this.grafanaConfig = grafanaConfig;
     }
 
     @Override
@@ -51,7 +57,7 @@ public class HystrixThreadPoolService implements Runnable {
             return;
         }
         for(String service : CollectionUtils.nullAndEmptySafeValueList(serviceVsPoolList.keySet())) {
-            String ownerEmail = DEFAULT_EMAIL;
+            String ownerEmail = mailConfig.getDefaultOwnersEmails();
             if(serviceVsOwnerMap.containsKey(service)) {
                 ownerEmail = serviceVsOwnerMap.get(service);
             }
@@ -66,12 +72,12 @@ public class HystrixThreadPoolService implements Runnable {
             return;
         }
 
-        Map<String, Integer> hystrixPoolVsMaxPool = executePoolQuery(hystrixPools, MAX_POOL_QUERY, CLUSTER_NAME);
+        Map<String, Integer> hystrixPoolVsMaxPool = executePoolQuery(hystrixPools, MAX_POOL_QUERY);
         if(CollectionUtils.isEmpty(hystrixPoolVsMaxPool)) {
             LOGGER.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
             return;
         }
-        Map<String, Integer> hystrixPoolVsPoolsUsage = executePoolQuery(hystrixPools, POOL_USAGE_QUERY, CLUSTER_NAME);
+        Map<String, Integer> hystrixPoolVsPoolsUsage = executePoolQuery(hystrixPools, POOL_USAGE_QUERY);
         if(CollectionUtils.isEmpty(hystrixPoolVsPoolsUsage)) {
             LOGGER.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = []");
             return;
@@ -102,26 +108,32 @@ public class HystrixThreadPoolService implements Runnable {
             if(usagePercentage < threadPoolConfig.getThresholdMinUsagePercentage()) {
                 reduceBy = ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100) - poolUsage;
                 if(reduceBy > threadPoolConfig.getReduceByThreshold()) {
-                    mailSender.send(MAIL_SUBJECT, getReduceByMailBody(serviceName, pool, maxPool, poolUsage, reduceBy, ownerEmail), ownerEmail);
+                    mailSender.send(MAIL_SUBJECT, getReduceByMailBody(serviceName, pool, maxPool, poolUsage, reduceBy, ownerEmail),
+                                    ownerEmail
+                                   );
                 }
             }
             if(usagePercentage > threadPoolConfig.getThresholdMaxUsagePercentage()) {
                 extendBy = poolUsage - ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100);
                 if(extendBy > threadPoolConfig.getExtendByThreshold()) {
-                    mailSender.send(MAIL_SUBJECT, getExtendByMailBody(serviceName, pool, maxPool, poolUsage, extendBy, ownerEmail), ownerEmail);
+                    mailSender.send(MAIL_SUBJECT, getExtendByMailBody(serviceName, pool, maxPool, poolUsage, extendBy, ownerEmail),
+                                    ownerEmail
+                                   );
                 }
             }
             LOGGER.info(
-                    String.format("Service: %s Type: HYSTRIX Pool: %s Max: %s Usage: %s Reduce: %s Extend: %s",
-                            serviceName, pool, maxPool, poolUsage, reduceBy, extendBy
+                    String.format("Service: %s Type: HYSTRIX Pool: %s Max: %s Usage: %s Reduce: %s Extend: %s", serviceName, pool, maxPool,
+                                  poolUsage, reduceBy, extendBy
                                  ));
         }
     }
 
-    private Map<String, Integer> executePoolQuery(List<String> hystrixPools, String query, String clusterName) {
+    private Map<String, Integer> executePoolQuery(List<String> hystrixPools, String query) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
-            String poolQuery = String.format(query, clusterName, hystrixPool, Integer.toString(threadPoolConfig.getQueryDurationInHours()));
+            String poolQuery = String.format(query, grafanaConfig.getPrefix(), hystrixPool,
+                                             Integer.toString(threadPoolConfig.getQueryDurationInHours())
+                                            );
             queries.add(poolQuery);
         }
         Map<String, Integer> responses;

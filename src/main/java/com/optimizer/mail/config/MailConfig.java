@@ -32,4 +32,6 @@ public class MailConfig {
     private String from;
 
     private boolean defaultOwnersEnabled;
+
+    private String defaultOwnersEmails;
 }

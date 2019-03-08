@@ -1,6 +1,6 @@
 package com.optimizer.config;
 
-import com.optimizer.grafana.config.GrafannaConfig;
+import com.optimizer.grafana.config.GrafanaConfig;
 import com.optimizer.mail.config.MailConfig;
 import com.optimizer.threadpool.config.ThreadPoolConfig;
 import io.dropwizard.Configuration;
@@ -23,25 +23,10 @@ public class OptimizerConfig extends Configuration {
 
     private List<ServiceConfig> serviceConfigs;
 
-    private GrafannaConfig grafannaConfig;
+    private GrafanaConfig grafanaConfig;
 
     private ThreadPoolConfig threadPoolConfig;
 
-    private MailConfig mail;
+    private MailConfig mailConfig;
 
-    public RiemannConfig getRiemann() {
-        return riemann;
-    }
-
-    public List<ServiceConfig> getServiceConfigs() {
-        return serviceConfigs;
-    }
-
-    public GrafannaConfig getGrafannaConfig() {
-        return grafannaConfig;
-    }
-
-    public ThreadPoolConfig getThreadPoolConfig() {
-        return threadPoolConfig;
-    }
 }

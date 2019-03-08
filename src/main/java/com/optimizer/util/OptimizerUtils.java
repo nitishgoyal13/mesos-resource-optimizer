@@ -1,6 +1,6 @@
 package com.optimizer.util;
 
-import com.optimizer.grafana.config.GrafannaConfig;
+import com.optimizer.grafana.config.GrafanaConfig;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -19,7 +19,6 @@ public class OptimizerUtils {
     public static final String QUERY = "%s;";
     private static final Logger LOGGER = LoggerFactory.getLogger(OptimizerUtils.class);
 
-    private static final String URL_TEMPLATE = "http://prd-grafana001.phonepe.nm1/api/datasources/proxy/10/query?db=riemann_metrics&q=%s";
     private static final String ENCODING = "UTF-8";
     public static final String RESULTS = "results";
     public static final String SERIES = "series";
@@ -30,13 +29,12 @@ public class OptimizerUtils {
     public static final int STATUS_OK_RANGE_START = 200;
     public static final int STATUS_OK_RANGE_END = 300;
     public static final String MAIL_SUBJECT = "Thread Pool Optimization";
-    public static final String DEFAULT_EMAIL = "mudit.g@phonepe.com, nitish.goyal@phonepe.com";
 
-    private static HttpResponse executeGetRequest(HttpClient client, String query, GrafannaConfig grafannaConfig) throws Exception {
+    private static HttpResponse executeGetRequest(HttpClient client, String query, GrafanaConfig grafanaConfig) throws Exception {
         String encodedQuery = URLEncoder.encode(query, ENCODING);
-        String url = String.format(URL_TEMPLATE, encodedQuery);
+        String url = String.format(grafanaConfig.getUrl(), encodedQuery);
         HttpGet request = new HttpGet(url);
-        grafannaConfig.getHeaders()
+        grafanaConfig.getHeaders()
                 .forEach(header -> request.addHeader(header.getName(), header.getValue()));
         return client.execute(request);
     }
@@ -80,9 +78,9 @@ public class OptimizerUtils {
         return maxValue;
     }
 
-    public static HttpResponse getHttpResponse(HttpClient client, String query, GrafannaConfig grafannaConfig) {
+    public static HttpResponse getHttpResponse(HttpClient client, String query, GrafanaConfig grafanaConfig) {
         try {
-            HttpResponse response = executeGetRequest(client, query, grafannaConfig);
+            HttpResponse response = executeGetRequest(client, query, grafanaConfig);
             int status = response.getStatusLine()
                     .getStatusCode();
             if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
@@ -99,20 +97,24 @@ public class OptimizerUtils {
     }
 
     public static String getReduceByMailBody(String serviceName, String pool, int maxPool, int poolUsage, int reduceBy, String ownerEmail) {
-        return String.format("Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage is consistently below 50%% in last 8 days. " +
+        return String.format(
+                "Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage is consistently below 50%% in last 8 days. " +
                 " <br>Service: %s  <br>HYSTRIX Pool: %s <br> Max Pool: %s <br> Pool Usage: %s <br> Can be reduced by: %s " +
-                " <br> Kindly reach out to Nitish(nitish.goyal@phonepe.com) for any queries or if you aren't " +
+                " <br> Kindly reach out to Nitish for any queries or if you aren't " +
                 "the service owner for the mail received. Also, help me out figuring the service owner where service owner email is not " +
-                "defined" + "<br> <br> Refer to the link http://prd-grafana001.phonepe.nm1/dashboard/db/api-thread-pools",
-                ownerEmail, serviceName, pool, Integer.toString(maxPool), Integer.toString(poolUsage), Integer.toString(reduceBy));
+                "defined" , ownerEmail,
+                serviceName, pool, Integer.toString(maxPool), Integer.toString(poolUsage), Integer.toString(reduceBy)
+                            );
     }
 
     public static String getExtendByMailBody(String serviceName, String pool, int maxPool, int poolUsage, int extendBy, String ownerEmail) {
-        return String.format("Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage is consistently above 50%% in last 8 days. " +
-                        " <br>Service: %s  <br>HYSTRIX Pool: %s <br> Max Pool: %s <br> Pool Usage: %s <br> Can be extended by: %s " +
-                        " <br> Kindly reach out to Nitish(nitish.goyal@phonepe.com) for any queries or if you aren't " +
-                        "the service owner for the mail received. Also, help me out figuring the service owner where service owner email is not " +
-                        "defined" + "<br> <br> Refer to the link http://prd-grafana001.phonepe.nm1/dashboard/db/api-thread-pools",
-                ownerEmail, serviceName, pool, Integer.toString(maxPool), Integer.toString(poolUsage), Integer.toString(extendBy));
+        return String.format(
+                "Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage is consistently above 50%% in last 8 days. " +
+                " <br>Service: %s  <br>HYSTRIX Pool: %s <br> Max Pool: %s <br> Pool Usage: %s <br> Can be extended by: %s " +
+                " <br> Kindly reach out to Nitish for any queries or if you aren't " +
+                "the service owner for the mail received. Also, help me out figuring the service owner where service owner email is not " +
+                "defined", ownerEmail, serviceName, pool, Integer.toString(maxPool), Integer.toString(poolUsage),
+                Integer.toString(extendBy)
+                            );
     }
 }

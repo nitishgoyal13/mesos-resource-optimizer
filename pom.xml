@@ -8,7 +8,7 @@
     <artifactId>optimizer</artifactId>
     <packaging>pom</packaging>
     <version>1.1-SNAPSHOT</version>
-   
+
     <name>Optimizer</name>
     <description>
         Manages the resources of any service
@@ -21,8 +21,6 @@
             <email>nitishgoyal13@gmail.com</email>
         </developer>
     </developers>
-
-
 
     <distributionManagement>
         <repository>
