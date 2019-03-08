@@ -4,6 +4,7 @@ import com.optimizer.config.OptimizerConfig;
 import com.optimizer.config.ServiceConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.grafana.config.GrafannaConfig;
+import com.optimizer.http.HttpClientFactory;
 import com.optimizer.mail.MailSender;
 import com.optimizer.resources.ThreadPoolResource;
 import com.optimizer.threadpool.HystrixThreadPoolService;
@@ -51,6 +52,7 @@ public class OptimizerServer extends Application<OptimizerConfig> {
         GrafannaConfig grafannaConfig = configuration.getGrafannaConfig();
         GrafanaService grafanaService = GrafanaService.builder()
                 .grafannaConfig(grafannaConfig)
+                .client(HttpClientFactory.getHttpClient())
                 .build();
         Map<String, String> serviceVsOwnerMap = createServiceVsOwnerMap(serviceConfigs);
         HystrixThreadPoolService hystrixThreadPoolService = HystrixThreadPoolService.builder()

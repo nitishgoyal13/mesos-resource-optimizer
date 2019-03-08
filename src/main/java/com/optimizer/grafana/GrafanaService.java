@@ -2,9 +2,10 @@ package com.optimizer.grafana;
 
 import com.google.common.collect.Lists;
 import com.optimizer.grafana.config.GrafannaConfig;
-import com.optimizer.http.HttpClientFactory;
 import com.optimizer.util.OptimizerUtils;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
@@ -24,6 +25,8 @@ import static com.optimizer.util.OptimizerUtils.*;
  Created by mudit.g on Feb, 2019
  ***/
 @Builder
+@AllArgsConstructor
+@Data
 public class GrafanaService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GrafanaService.class.getSimpleName());
@@ -32,10 +35,6 @@ public class GrafanaService {
     private HttpClient client;
     private GrafannaConfig grafannaConfig;
 
-    public GrafanaService(GrafannaConfig grafannaConfig) {
-        this.client = HttpClientFactory.getHttpClient();
-        this.grafannaConfig = grafannaConfig;
-    }
 
     public List<HttpResponse> execute(List<String> queries) {
         List<HttpResponse> responses = new ArrayList<>();

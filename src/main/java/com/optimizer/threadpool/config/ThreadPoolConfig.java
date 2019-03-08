@@ -16,7 +16,9 @@ import javax.ws.rs.DefaultValue;
 @NoArgsConstructor
 public class ThreadPoolConfig {
 
-    private int thresholdUsagePercentage = 60;
+    private int thresholdMinUsagePercentage = 50;
+
+    private int thresholdMaxUsagePercentage = 70;
 
     private int queryDurationInHours = 72;
 

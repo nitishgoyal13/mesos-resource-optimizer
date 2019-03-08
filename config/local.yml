@@ -12,7 +12,8 @@ grafannaConfig:
       value: Bearer eyJrIjoiWkxRWEJPS3ZUNURUbTlsQ2VEalVQUGpLSDhZZW9RMGgiLCJuIjoib3B0aW1pemVyIiwiaWQiOjF9
 
 threadPoolConfig:
-  thresholdUsagePercentage: 50
+  thresholdMinUsagePercentage: 50
+  thresholdMaxUsagePercentage: 60
   queryDurationInHours: 192
   initialDelayInSeconds: 2
   intervalInSeconds: 86400
