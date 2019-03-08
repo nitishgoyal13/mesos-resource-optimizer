@@ -66,8 +66,8 @@ public class HystrixThreadPoolService implements Runnable {
             return;
         }
 
-        Map<String, Integer> hystrixPoolVsCorePool = executePoolQuery(hystrixPools, MAX_POOL_QUERY, CLUSTER_NAME);
-        if(CollectionUtils.isEmpty(hystrixPoolVsCorePool)) {
+        Map<String, Integer> hystrixPoolVsMaxPool = executePoolQuery(hystrixPools, MAX_POOL_QUERY, CLUSTER_NAME);
+        if(CollectionUtils.isEmpty(hystrixPoolVsMaxPool)) {
             LOGGER.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
             return;
         }
@@ -77,17 +77,16 @@ public class HystrixThreadPoolService implements Runnable {
             return;
         }
         String pool;
-        int corePool;
+        int maxPool;
         int poolUsage;
-        int totalCorePool = 0;
-        int canBeFreed = 0;
         for(String hystrixPool : hystrixPools) {
             int reduceBy = 0;
+            int extendBy = 0;
             pool = hystrixPool;
-            if(hystrixPoolVsCorePool.containsKey(pool)) {
-                corePool = hystrixPoolVsCorePool.get(pool);
+            if(hystrixPoolVsMaxPool.containsKey(pool)) {
+                maxPool = hystrixPoolVsMaxPool.get(pool);
             } else {
-                LOGGER.error(String.format("Pool: %s, not present in hystrixPoolVsCorePool map", pool));
+                LOGGER.error(String.format("Pool: %s, not present in hystrixPoolVsMaxPool map", pool));
                 continue;
             }
             if(hystrixPoolVsPoolsUsage.containsKey(pool)) {
@@ -96,24 +95,27 @@ public class HystrixThreadPoolService implements Runnable {
                 LOGGER.error(String.format("Pool: %s, not present in hystrixPoolVsPoolsUsage map", pool));
                 continue;
             }
-            if(corePool <= 0 || poolUsage <= 0) {
+            if(maxPool <= 0 || poolUsage <= 0) {
                 continue;
             }
-            totalCorePool += corePool;
-            int usagePercentage = poolUsage * 100 / corePool;
+            int usagePercentage = poolUsage * 100 / maxPool;
             if(usagePercentage < threadPoolConfig.getThresholdUsagePercentage()) {
-                reduceBy = ((corePool * threadPoolConfig.getThresholdUsagePercentage()) / 100) - poolUsage;
+                reduceBy = ((maxPool * threadPoolConfig.getThresholdUsagePercentage()) / 100) - poolUsage;
                 if(reduceBy > threadPoolConfig.getReduceByThreshold()) {
-                    mailSender.send(MAIL_SUBJECT, getMailBody(serviceName, pool, corePool, poolUsage, reduceBy, ownerEmail), ownerEmail);
+                    mailSender.send(MAIL_SUBJECT, getReduceByMailBody(serviceName, pool, maxPool, poolUsage, reduceBy, ownerEmail), ownerEmail);
                 }
             }
-            canBeFreed += reduceBy;
+            if(usagePercentage > threadPoolConfig.getThresholdUsagePercentage()) {
+                extendBy = poolUsage - ((maxPool * threadPoolConfig.getThresholdUsagePercentage()) / 100);
+                if(extendBy > threadPoolConfig.getExtendByThreshold()) {
+                    mailSender.send(MAIL_SUBJECT, getExtendByMailBody(serviceName, pool, maxPool, poolUsage, extendBy, ownerEmail), ownerEmail);
+                }
+            }
             LOGGER.info(
-                    String.format("Service: %s Type: HYSTRIX Pool: %s Core: %s Usage: %s Free: %s", serviceName, pool, corePool, poolUsage,
-                                  reduceBy
+                    String.format("Service: %s Type: HYSTRIX Pool: %s Max: %s Usage: %s Reduce: %s Extend: %s",
+                            serviceName, pool, maxPool, poolUsage, reduceBy, extendBy
                                  ));
         }
-        LOGGER.info(String.format("Service: %s Type: HYSTRIX Total: %s Free: %s", serviceName, totalCorePool, canBeFreed));
     }
 
     private Map<String, Integer> executePoolQuery(List<String> hystrixPools, String query, String clusterName) {

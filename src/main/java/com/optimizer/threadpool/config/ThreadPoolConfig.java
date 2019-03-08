@@ -27,4 +27,7 @@ public class ThreadPoolConfig {
     @DefaultValue("50")
     private int reduceByThreshold = 50;
 
+    @DefaultValue("50")
+    private int extendByThreshold = 50;
+
 }
