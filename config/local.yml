@@ -15,7 +15,7 @@ grafanaConfig:
 
 threadPoolConfig:
   thresholdMinUsagePercentage: 50
-  thresholdMaxUsagePercentage: 60
+  thresholdMaxUsagePercentage: 70
   queryDurationInHours: 192
   initialDelayInSeconds: 2
   intervalInSeconds: 86400
@@ -110,12 +110,10 @@ serviceConfigs:
 
 mailConfig:
   from: noreply@phonepe.com
-  host: ops-jump001.phonepe.nm1
+  host: stg-smtp001.phonepe.nm2
   port: 25
-  user: AKIAJLCWHAOEDK4ZDOGQ
-  password: AgjCxNI68hrnj6bIzuJCiZBlDXW+TioRoU11++Yx97
   defaultOwnersEnabled: true
-  defaultOwnersEmails: nitish.goyal@phonepe.com
+  defaultOwnersEmails: nitish.goyal@phonepe.com, mudit@phonepe.com, santanu@phonepe.com, phaneesh@phonepe.com
 
 logging:
   level: INFO

@@ -27,8 +27,8 @@ public class MailSender implements Managed {
         mailProps.put("mail.smtp.auth", false);
         mailProps.put("mail.smtp.host", mailConfig.getHost());
         mailProps.put("mail.smtp.startttls.enable", false);
-        mailProps.put("mail.smtp.timeout", 10000);
-        mailProps.put("mail.smtp.connectiontimeout", 10000);
+        mailProps.put("mail.smtp.timeout", 20000);
+        mailProps.put("mail.smtp.connectiontimeout", 20000);
         this.mailSession = Session.getDefaultInstance(mailProps);
     }
 
