@@ -23,8 +23,6 @@ threadPoolConfig:
   extendByThreshold: 50
 
 serviceConfigs:
-  - service: foxtrot-config
-    ownerEmail: nitish.goyal@phonepe.com
   - service: tstore
     ownerEmail: achanta.vamsi@phonepe.com, tushar.naik@phonepe.com
   - service: foxtrot-config
