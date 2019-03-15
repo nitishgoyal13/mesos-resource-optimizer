@@ -113,7 +113,7 @@ mailConfig:
   host: stg-smtp001.phonepe.nm2
   port: 25
   defaultOwnersEnabled: true
-  defaultOwnersEmails: nitish.goyal@phonepe.com, mudit@phonepe.com, santanu@phonepe.com, phaneesh@phonepe.com
+  defaultOwnersEmails: nitish.goyal@phonepe.com, mudit.g@phonepe.com, santanu@phonepe.com, phaneesh@phonepe.com
 
 logging:
   level: INFO

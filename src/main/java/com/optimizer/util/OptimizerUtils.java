@@ -108,7 +108,7 @@ public class OptimizerUtils {
 
     public static String getExtendByMailBody(String serviceName, String pool, int maxPool, int poolUsage, int extendBy, String ownerEmail) {
         return String.format(
-                "Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage has gone above 70% in last 8 days. " +
+                "Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage has gone above 70%% in last 8 days. " +
                 " <br>Service: %s  <br>HYSTRIX Pool: %s <br> Max Pool: %s <br> Pool Usage: %s <br> Can be extended by: %s " +
                 " <br> Kindly reach out to Nitish for any queries. If you aren't " +
                 "the service owner for the mail received, kindly help me out figuring the service owner where service owner", ownerEmail,
