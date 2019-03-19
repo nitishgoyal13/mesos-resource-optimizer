@@ -72,12 +72,12 @@ public class HystrixThreadPoolService implements Runnable {
             return;
         }
 
-        Map<String, Integer> hystrixPoolVsMaxPool = executePoolQuery(hystrixPools, MAX_POOL_QUERY);
+        Map<String, Integer> hystrixPoolVsMaxPool = executePoolQuery(hystrixPools, MAX_POOL_QUERY, ExtractionStrategy.AVERAGE);
         if(CollectionUtils.isEmpty(hystrixPoolVsMaxPool)) {
             LOGGER.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
             return;
         }
-        Map<String, Integer> hystrixPoolVsPoolsUsage = executePoolQuery(hystrixPools, POOL_USAGE_QUERY);
+        Map<String, Integer> hystrixPoolVsPoolsUsage = executePoolQuery(hystrixPools, POOL_USAGE_QUERY, ExtractionStrategy.MAX);
         if(CollectionUtils.isEmpty(hystrixPoolVsPoolsUsage)) {
             LOGGER.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = []");
             return;
@@ -108,9 +108,9 @@ public class HystrixThreadPoolService implements Runnable {
             if(usagePercentage < threadPoolConfig.getThresholdMinUsagePercentage()) {
                 reduceBy = ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100) - poolUsage;
                 if(reduceBy > threadPoolConfig.getReduceByThreshold()) {
-                    mailSender.send(MAIL_SUBJECT, getReduceByMailBody(serviceName, pool, maxPool, poolUsage, reduceBy, ownerEmail),
+                    /*mailSender.send(MAIL_SUBJECT, getReduceByMailBody(serviceName, pool, maxPool, poolUsage, reduceBy, ownerEmail),
                                     ownerEmail
-                                   );
+                                   );*/
                 }
             }
             if(usagePercentage > threadPoolConfig.getThresholdMaxUsagePercentage()) {
@@ -128,7 +128,7 @@ public class HystrixThreadPoolService implements Runnable {
         }
     }
 
-    private Map<String, Integer> executePoolQuery(List<String> hystrixPools, String query) {
+    private Map<String, Integer> executePoolQuery(List<String> hystrixPools, String query, ExtractionStrategy extractionStrategy) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
             String poolQuery = String.format(query, grafanaConfig.getPrefix(), hystrixPool,
@@ -138,7 +138,7 @@ public class HystrixThreadPoolService implements Runnable {
         }
         Map<String, Integer> responses;
         try {
-            responses = executeGrafanaQueries(queries, hystrixPools);
+            responses = executeGrafanaQueries(queries, hystrixPools, extractionStrategy);
             if(CollectionUtils.isEmpty(responses)) {
                 LOGGER.error("Error in executing grafana queries. Got grafanaResponse = []");
                 return Collections.emptyMap();
@@ -150,7 +150,8 @@ public class HystrixThreadPoolService implements Runnable {
         return responses;
     }
 
-    private Map<String, Integer> executeGrafanaQueries(List<String> queries, List<String> hystrixPools) throws Exception {
+    private Map<String, Integer> executeGrafanaQueries(List<String> queries, List<String> hystrixPools,
+                                                       ExtractionStrategy extractionStrategy) throws Exception {
         Map<String, Integer> hystrixPoolVsResult = new HashMap<>();
         int hystrixPoolIndex = 0;
         List<HttpResponse> httpResponses = grafanaService.execute(queries);
@@ -171,7 +172,7 @@ public class HystrixThreadPoolService implements Runnable {
                 JSONArray resultArray = (JSONArray)jsonObject.get(RESULTS);
                 for(int resultIndex = 0; resultIndex < resultArray.length(); resultIndex++) {
                     int result = getValueFromGrafanaResponse(resultArray.get(resultIndex)
-                                                                     .toString());
+                                                                     .toString(), extractionStrategy);
                     hystrixPoolVsResult.put(hystrixPools.get(hystrixPoolIndex), result);
                     hystrixPoolIndex++;
                 }
@@ -180,12 +181,25 @@ public class HystrixThreadPoolService implements Runnable {
         return hystrixPoolVsResult;
     }
 
-    private int getValueFromGrafanaResponse(String response) {
+    private int getValueFromGrafanaResponse(String response, ExtractionStrategy extractionStrategy) {
         JSONObject jsonObject = new JSONObject(response);
         JSONArray seriesJSONArray = getArrayFromJSONObject(jsonObject, SERIES);
         JSONObject seriesJSONObject = getObjectFromJSONArray(seriesJSONArray, INDEX_ZERO);
         JSONArray valuesJSONArray = getArrayFromJSONObject(seriesJSONObject, VALUES);
-        return getMaxValueFromJsonArray(valuesJSONArray);
+        switch (extractionStrategy) {
+            case MAX:
+                return getMaxValueFromJsonArray(valuesJSONArray);
+            case AVERAGE:
+                return getAvgValueFromJsonArray(valuesJSONArray);
+            default:
+                return getMaxValueFromJsonArray(valuesJSONArray);
+        }
+
+    }
+
+    private enum ExtractionStrategy {
+        AVERAGE,
+        MAX
     }
 
 

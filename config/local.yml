@@ -30,13 +30,13 @@ serviceConfigs:
   - service: sessionServiceDb
     ownerEmail: sudhir.singh@phonepe.com
   - service: symphony-railservices-pool
-    ownerEmail: durgaprasad.m@phonepe.com
+    ownerEmail: durgaprasad.m@phonepe.com, symphony-oncall@phonepe.com
   - service: keystore
     ownerEmail: tushar.naik@phonepe.com
   - service: iris-queries
     ownerEmail: praveen.k@phonepe.com
   - service: mandates-db
-    ownerEmail: durgaprasad.m@phonepe.com
+    ownerEmail: durgaprasad.m@phonepe.com, symphony-oncall@phonepe.com
   - service: oculusSessionService
     ownerEmail: sudhir.singh@phonepe.com
   - service: nexus_callbacks
@@ -54,11 +54,11 @@ serviceConfigs:
   - service: sessionServiceProxy
     ownerEmail: sudhir.singh@phonepe.com
   - service: symphony-internal-pool
-    ownerEmail: durgaprasad.m@phonepe.com
+    ownerEmail: durgaprasad.m@phonepe.com, symphony-oncall@phonepe.com
   - service: symphony-redbus-pool
-    ownerEmail: durgaprasad.m@phonepe.com
+    ownerEmail: durgaprasad.m@phonepe.com, symphony-oncall@phonepe.com
   - service: mandate
-    ownerEmail: durgaprasad.m@phonepe.com
+    ownerEmail: durgaprasad.m@phonepe.com, symphony-oncall@phonepe.com
   - service: payments
     ownerEmail: rishabh@phonepe.com, payments-dev@phonepe.com
   - service: users-db
@@ -76,13 +76,13 @@ serviceConfigs:
   - service: geoservice-api
     ownerEmail: mayank.rathi@phonepe.com
   - service: symphony-commute-pool
-    ownerEmail: durgaprasad.m@phonepe.com
+    ownerEmail: durgaprasad.m@phonepe.com, symphony-oncall@phonepe.com
   - service: wallet
     ownerEmail: rishabh@phonepe.com, tushar@phonepe.com, payments-dev@phonepe.com
   - service: sessionServiceOnboarding
     ownerEmail: sudhir.singh@phonepe.com
   - service: catalogue-pool
-    ownerEmail: durgaprasad.m@phonepe.com
+    ownerEmail: durgaprasad.m@phonepe.com, symphony-oncall@phonepe.com
   - service: vault
     ownerEmail: phaneesh@phonepe.com, achanta.vamsi@phonepe.com
   - service: scroll
@@ -100,7 +100,7 @@ serviceConfigs:
   - service: banisher
     ownerEmail: shashank.g@phonepe.com
   - service: samsara-pool
-    ownerEmail: durgaprasad.m@phonepe.com
+    ownerEmail: durgaprasad.m@phonepe.com, symphony-oncall@phonepe.com
   - service: nexus_service_provider_queries
     ownerEmail: sarang.shravagi@phonepe.com, santosh.patil@phonepe.com
   - service: nexus_db_updates
