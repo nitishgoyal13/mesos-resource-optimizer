@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
  ***/
 public class HttpClientFactory {
 
-    private static final int MAX_CONNECTION_POOL_SIZE = 10;
-    private static final int MAX_CONNECTION_PER_ROUTE = 10;
+    private static final int MAX_CONNECTION_POOL_SIZE = 20;
+    private static final int MAX_CONNECTION_PER_ROUTE = 20;
     private static final int IDLE_CONNECTION_TIMEOUT = 5;
 
     public static CloseableHttpClient getHttpClient() {

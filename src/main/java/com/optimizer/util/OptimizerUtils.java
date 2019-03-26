@@ -1,6 +1,7 @@
 package com.optimizer.util;
 
 import com.optimizer.grafana.config.GrafanaConfig;
+import com.optimizer.threadpool.HystrixThreadPoolService;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -30,6 +31,11 @@ public class OptimizerUtils {
     public static final int STATUS_OK_RANGE_END = 300;
     public static final String MAIL_SUBJECT = "Thread Pool Optimization";
 
+    public enum ExtractionStrategy {
+        AVERAGE,
+        MAX
+    }
+
     private static HttpResponse executeGetRequest(HttpClient client, String query, GrafanaConfig grafanaConfig) throws Exception {
         String encodedQuery = URLEncoder.encode(query, ENCODING);
         String url = String.format(grafanaConfig.getUrl(), encodedQuery);
@@ -58,6 +64,20 @@ public class OptimizerUtils {
     public static JSONObject getObjectFromJSONArray(JSONArray jsonArray, int index) {
         if(jsonArray != null && jsonArray.length() > index) {
             return (JSONObject)jsonArray.get(index);
+        }
+        return null;
+    }
+
+    public static JSONObject getObjectFromJSONObject(JSONObject jsonObject, String key) {
+        if(jsonObject != null && jsonObject.has(key)) {
+            return (JSONObject)jsonObject.get(key);
+        }
+        return null;
+    }
+
+    public static String getStringFromJSONObject(JSONObject jsonObject, String key) {
+        if(jsonObject != null && jsonObject.has(key)) {
+            return (String)jsonObject.get(key);
         }
         return null;
     }
@@ -113,25 +133,5 @@ public class OptimizerUtils {
             LOGGER.error("Error in Http get: " + e.getMessage(), e);
             return null;
         }
-    }
-
-    public static String getReduceByMailBody(String serviceName, String pool, int maxPool, int poolUsage, int reduceBy, String ownerEmail) {
-        return String.format(
-                "Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage is consistently below 50%% in last 8 days. " +
-                " <br>Service: %s  <br>HYSTRIX Pool: %s <br> Max Pool: %s <br> Pool Usage: %s <br> Can be reduced by: %s " +
-                " <br> Kindly reach out to Nitish for any queries. If you aren't " +
-                "the service owner for the mail received, kindly help me out figuring the service owner", ownerEmail, serviceName, pool,
-                Integer.toString(maxPool), Integer.toString(poolUsage), Integer.toString(reduceBy)
-                            );
-    }
-
-    public static String getExtendByMailBody(String serviceName, String pool, int maxPool, int poolUsage, int extendBy, String ownerEmail) {
-        return String.format("Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage has gone above 70%% in last 8 days. " +
-                             " <br>Service: %s  <br>HYSTRIX Pool: %s <br> Max Pool: %s <br> Pool Usage: %s <br> Can be extended by: %s " +
-                             " <br> Kindly reach out to Nitish for any queries. If you aren't " +
-                             "the service owner for the mail received, kindly help me out figuring the service owner where service owner",
-                             ownerEmail, serviceName, pool, Integer.toString(maxPool), Integer.toString(poolUsage),
-                             Integer.toString(extendBy)
-                            );
     }
 }

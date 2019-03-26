@@ -2,6 +2,7 @@ package com.optimizer.config;
 
 import com.optimizer.grafana.config.GrafanaConfig;
 import com.optimizer.mail.config.MailConfig;
+import com.optimizer.mesosmonitor.config.MesosMonitorConfig;
 import com.optimizer.threadpool.config.ThreadPoolConfig;
 import io.dropwizard.Configuration;
 import io.dropwizard.riemann.RiemannConfig;
@@ -28,5 +29,9 @@ public class OptimizerConfig extends Configuration {
     private ThreadPoolConfig threadPoolConfig;
 
     private MailConfig mailConfig;
+
+    private List<AppConfig> appConfigs;
+
+    private MesosMonitorConfig mesosMonitorConfig;
 
 }

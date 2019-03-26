@@ -13,6 +13,4 @@ public class GrafanaConfig {
     private List<HeaderConfig> headers;
 
     private String url;
-
-    private String prefix;
 }

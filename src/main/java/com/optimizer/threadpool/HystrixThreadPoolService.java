@@ -51,7 +51,7 @@ public class HystrixThreadPoolService implements Runnable {
 
     @Override
     public void run() {
-        Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(CLUSTER_NAME);
+        Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(threadPoolConfig.getPrefix());
         if(CollectionUtils.isEmpty(serviceVsPoolList)) {
             LOGGER.error("Error in getting serviceVsPoolList. Got empty map");
             return;
@@ -108,17 +108,17 @@ public class HystrixThreadPoolService implements Runnable {
             if(usagePercentage < threadPoolConfig.getThresholdMinUsagePercentage()) {
                 reduceBy = ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100) - poolUsage;
                 if(reduceBy > threadPoolConfig.getReduceByThreshold()) {
-                    /*mailSender.send(MAIL_SUBJECT, getReduceByMailBody(serviceName, pool, maxPool, poolUsage, reduceBy, ownerEmail),
-                                    ownerEmail
-                                   );*/
+//                    mailSender.send(MAIL_SUBJECT, getReduceByMailBody(serviceName, pool, maxPool, poolUsage, reduceBy, ownerEmail, threadPoolConfig.getThresholdMinUsagePercentage()),
+//                                    ownerEmail
+//                                   );
                 }
             }
             if(usagePercentage > threadPoolConfig.getThresholdMaxUsagePercentage()) {
                 extendBy = poolUsage - ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100);
                 if(extendBy > threadPoolConfig.getExtendByThreshold()) {
-                    mailSender.send(MAIL_SUBJECT, getExtendByMailBody(serviceName, pool, maxPool, poolUsage, extendBy, ownerEmail),
-                                    ownerEmail
-                                   );
+//                    mailSender.send(MAIL_SUBJECT, getExtendByMailBody(serviceName, pool, maxPool, poolUsage, extendBy, ownerEmail, threadPoolConfig.getThresholdMaxUsagePercentage()),
+//                                    ownerEmail
+//                                   );
                 }
             }
             LOGGER.info(
@@ -131,14 +131,14 @@ public class HystrixThreadPoolService implements Runnable {
     private Map<String, Integer> executePoolQuery(List<String> hystrixPools, String query, ExtractionStrategy extractionStrategy) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
-            String poolQuery = String.format(query, grafanaConfig.getPrefix(), hystrixPool,
+            String poolQuery = String.format(query, threadPoolConfig.getPrefix(), hystrixPool,
                                              Integer.toString(threadPoolConfig.getQueryDurationInHours())
                                             );
             queries.add(poolQuery);
         }
         Map<String, Integer> responses;
         try {
-            responses = executeGrafanaQueries(queries, hystrixPools, extractionStrategy);
+            responses = grafanaService.executeQueriesAndGetMapWithEntity(queries, hystrixPools, extractionStrategy);
             if(CollectionUtils.isEmpty(responses)) {
                 LOGGER.error("Error in executing grafana queries. Got grafanaResponse = []");
                 return Collections.emptyMap();
@@ -150,57 +150,27 @@ public class HystrixThreadPoolService implements Runnable {
         return responses;
     }
 
-    private Map<String, Integer> executeGrafanaQueries(List<String> queries, List<String> hystrixPools,
-                                                       ExtractionStrategy extractionStrategy) throws Exception {
-        Map<String, Integer> hystrixPoolVsResult = new HashMap<>();
-        int hystrixPoolIndex = 0;
-        List<HttpResponse> httpResponses = grafanaService.execute(queries);
-        if(CollectionUtils.isEmpty(httpResponses)) {
-            return Collections.emptyMap();
-        }
-        for(HttpResponse httpResponse : httpResponses) {
-            int status = httpResponse.getStatusLine()
-                    .getStatusCode();
-            if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
-                LOGGER.error("Error in Http get, Status Code: " + httpResponse.getStatusLine()
-                        .getStatusCode() + " received Response: " + httpResponse);
-                return Collections.emptyMap();
-            }
-            String data = EntityUtils.toString(httpResponse.getEntity());
-            JSONObject jsonObject = new JSONObject(data);
-            if(jsonObject.has(RESULTS)) {
-                JSONArray resultArray = (JSONArray)jsonObject.get(RESULTS);
-                for(int resultIndex = 0; resultIndex < resultArray.length(); resultIndex++) {
-                    int result = getValueFromGrafanaResponse(resultArray.get(resultIndex)
-                                                                     .toString(), extractionStrategy);
-                    hystrixPoolVsResult.put(hystrixPools.get(hystrixPoolIndex), result);
-                    hystrixPoolIndex++;
-                }
-            }
-        }
-        return hystrixPoolVsResult;
+    private String getReduceByMailBody(String serviceName, String pool, int maxPool, int poolUsage, int reduceBy,
+                                             String ownerEmail, int threshodMinUsagePercentage) {
+        return String.format(
+                "Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage is consistently below %s%% in last 8 days. " +
+                        " <br>Service: %s  <br>HYSTRIX Pool: %s <br> Max Pool: %s <br> Pool Usage: %s <br> Can be reduced by: %s " +
+                        " <br> Kindly reach out to Nitish for any queries. If you aren't " +
+                        "the service owner for the mail received, kindly help me out figuring the service owner", ownerEmail,
+                Integer.toString(threshodMinUsagePercentage), serviceName, pool, Integer.toString(maxPool), Integer.toString(poolUsage),
+                Integer.toString(reduceBy)
+        );
     }
 
-    private int getValueFromGrafanaResponse(String response, ExtractionStrategy extractionStrategy) {
-        JSONObject jsonObject = new JSONObject(response);
-        JSONArray seriesJSONArray = getArrayFromJSONObject(jsonObject, SERIES);
-        JSONObject seriesJSONObject = getObjectFromJSONArray(seriesJSONArray, INDEX_ZERO);
-        JSONArray valuesJSONArray = getArrayFromJSONObject(seriesJSONObject, VALUES);
-        switch (extractionStrategy) {
-            case MAX:
-                return getMaxValueFromJsonArray(valuesJSONArray);
-            case AVERAGE:
-                return getAvgValueFromJsonArray(valuesJSONArray);
-            default:
-                return getMaxValueFromJsonArray(valuesJSONArray);
-        }
-
+    private String getExtendByMailBody(String serviceName, String pool, int maxPool, int poolUsage, int extendBy,
+                                             String ownerEmail, int threshodMaxUsagePercentage) {
+        return String.format("Hi, %s <br> Hystrix Thread Pool can be optimized. Thread pool usage has gone above %s%% in last 8 days. " +
+                        " <br>Service: %s  <br>HYSTRIX Pool: %s <br> Max Pool: %s <br> Pool Usage: %s <br> Can be extended by: %s " +
+                        " <br> Kindly reach out to Nitish for any queries. If you aren't " +
+                        "the service owner for the mail received, kindly help me out figuring the service owner where service owner",
+                ownerEmail, Integer.toString(threshodMaxUsagePercentage), serviceName, pool, Integer.toString(maxPool),
+                Integer.toString(poolUsage), Integer.toString(extendBy)
+        );
     }
-
-    private enum ExtractionStrategy {
-        AVERAGE,
-        MAX
-    }
-
 
 }
