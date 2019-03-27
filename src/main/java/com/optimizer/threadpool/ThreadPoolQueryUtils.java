@@ -19,4 +19,8 @@ public class ThreadPoolQueryUtils {
     public static final String POOL_USAGE_QUERY =
             "SELECT sum(\"value\") FROM \"%s.%s" + ".rollingMaxActiveThreads\" WHERE time > now() - %sh group by time(30s) fill(null)";
 
+    public static final String POOL_USAGE_QUERY_BY_HOST =
+            "SELECT sum(\"value\") FROM \"%s.%s" + ".rollingMaxActiveThreads\" WHERE time > now() - %sh group by time(30s), host fill" +
+            "(null)";
+
 }

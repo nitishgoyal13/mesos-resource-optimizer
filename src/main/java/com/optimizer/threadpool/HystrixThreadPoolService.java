@@ -108,9 +108,9 @@ public class HystrixThreadPoolService implements Runnable {
             if(usagePercentage < threadPoolConfig.getThresholdMinUsagePercentage()) {
                 reduceBy = ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100) - poolUsage;
                 if(reduceBy > threadPoolConfig.getReduceByThreshold()) {
-                    /*mailSender.send(MAIL_SUBJECT, getReduceByMailBody(serviceName, pool, maxPool, poolUsage, reduceBy, ownerEmail),
+                    mailSender.send(MAIL_SUBJECT, getReduceByMailBody(serviceName, pool, maxPool, poolUsage, reduceBy, ownerEmail),
                                     ownerEmail
-                                   );*/
+                                   );
                 }
             }
             if(usagePercentage > threadPoolConfig.getThresholdMaxUsagePercentage()) {

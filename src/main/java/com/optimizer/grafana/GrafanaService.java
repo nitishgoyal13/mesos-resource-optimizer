@@ -42,9 +42,8 @@ public class GrafanaService {
             String query = String.join(";", queryChunk);
             query = String.format(QUERY, query);
             HttpResponse response = getHttpResponse(client, query, grafanaConfig);
-            responses.add(response);
-            if(response == null) {
-                return Collections.emptyList();
+            if(response != null){
+                responses.add(response);
             }
         }
         return responses;
