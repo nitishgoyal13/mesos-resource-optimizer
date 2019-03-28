@@ -56,7 +56,6 @@ public class MesosMonitorService implements Runnable {
     }
 
     private void handleMesosMonitor(List<String> apps) {
-        apps = apps.subList(1,2);
         Map<String, Long> appVsTotalCpu = executeMesosMonitorQuery(apps, APP_QUERY, TOTAL_CPU,
                 ExtractionStrategy.MAX);
         if(CollectionUtils.isEmpty(appVsTotalCpu)) {
