@@ -111,8 +111,10 @@ public class MesosMonitorService implements Runnable {
             }
             String appName = getAppName(app);
             String ownerEmail = mailConfig.getDefaultOwnersEmails();
-            if(appVsOwnerMap.containsKey(appName)) {
-                ownerEmail = appVsOwnerMap.get(appName);
+            if(appName != null) {
+                if(appVsOwnerMap.containsKey(appName)) {
+                    ownerEmail = appVsOwnerMap.get(appName);
+                }
             }
             if(totalCPU > 0 && usedCPU > 0) {
                 int usagePercentage = usedCPU * 100 / totalCPU;
