@@ -29,7 +29,8 @@ import static com.optimizer.util.OptimizerUtils.*;
 public class HystrixThreadPoolService implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
-    private static final String CLUSTER_NAME = "api";
+    private static final String TAGS = "tags";
+    private static final String HOST = "host";
 
     private GrafanaService grafanaService;
     private ThreadPoolConfig threadPoolConfig;
@@ -37,31 +38,39 @@ public class HystrixThreadPoolService implements Runnable {
     private Map<String, String> serviceVsOwnerMap;
     private MailConfig mailConfig;
     private GrafanaConfig grafanaConfig;
+    private List<String> clusters;
 
     @Builder
     public HystrixThreadPoolService(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig, MailSender mailSender,
-                                    Map<String, String> serviceVsOwnerMap, MailConfig mailConfig, GrafanaConfig grafanaConfig) {
+                                    Map<String, String> serviceVsOwnerMap, MailConfig mailConfig, GrafanaConfig grafanaConfig,
+                                    List<String> clusters) {
         this.grafanaService = grafanaService;
         this.threadPoolConfig = threadPoolConfig;
         this.mailSender = mailSender;
         this.serviceVsOwnerMap = serviceVsOwnerMap;
         this.mailConfig = mailConfig;
         this.grafanaConfig = grafanaConfig;
+        this.clusters = clusters;
     }
 
     @Override
     public void run() {
-        Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(CLUSTER_NAME);
-        if(CollectionUtils.isEmpty(serviceVsPoolList)) {
-            LOGGER.error("Error in getting serviceVsPoolList. Got empty map");
-            return;
-        }
-        for(String service : CollectionUtils.nullAndEmptySafeValueList(serviceVsPoolList.keySet())) {
-            String ownerEmail = mailConfig.getDefaultOwnersEmails();
-            if(serviceVsOwnerMap.containsKey(service)) {
-                ownerEmail = serviceVsOwnerMap.get(service);
+
+        for(String cluster : CollectionUtils.nullSafeList(clusters)) {
+
+            Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(cluster);
+
+            if(CollectionUtils.isEmpty(serviceVsPoolList)) {
+                LOGGER.error("Error in getting serviceVsPoolList. Got empty map");
+                continue;
             }
-            handleHystrixPool(service, serviceVsPoolList, ownerEmail);
+            for(String service : CollectionUtils.nullAndEmptySafeValueList(serviceVsPoolList.keySet())) {
+                String ownerEmail = mailConfig.getDefaultOwnersEmails();
+                if(serviceVsOwnerMap.containsKey(service)) {
+                    ownerEmail = serviceVsOwnerMap.get(service);
+                }
+                handleHystrixPool(service, serviceVsPoolList, ownerEmail);
+            }
         }
     }
 
@@ -171,7 +180,7 @@ public class HystrixThreadPoolService implements Runnable {
             if(jsonObject.has(RESULTS)) {
                 JSONArray resultArray = (JSONArray)jsonObject.get(RESULTS);
                 for(int resultIndex = 0; resultIndex < resultArray.length(); resultIndex++) {
-                    int result = getValueFromGrafanaResponse(resultArray.get(resultIndex)
+                    int result = ThreadPoolUtils.getValueFromGrafanaResponse(resultArray.get(resultIndex)
                                                                      .toString(), extractionStrategy);
                     hystrixPoolVsResult.put(hystrixPools.get(hystrixPoolIndex), result);
                     hystrixPoolIndex++;
@@ -181,26 +190,6 @@ public class HystrixThreadPoolService implements Runnable {
         return hystrixPoolVsResult;
     }
 
-    private int getValueFromGrafanaResponse(String response, ExtractionStrategy extractionStrategy) {
-        JSONObject jsonObject = new JSONObject(response);
-        JSONArray seriesJSONArray = getArrayFromJSONObject(jsonObject, SERIES);
-        JSONObject seriesJSONObject = getObjectFromJSONArray(seriesJSONArray, INDEX_ZERO);
-        JSONArray valuesJSONArray = getArrayFromJSONObject(seriesJSONObject, VALUES);
-        switch (extractionStrategy) {
-            case MAX:
-                return getMaxValueFromJsonArray(valuesJSONArray);
-            case AVERAGE:
-                return getAvgValueFromJsonArray(valuesJSONArray);
-            default:
-                return getMaxValueFromJsonArray(valuesJSONArray);
-        }
-
-    }
-
-    private enum ExtractionStrategy {
-        AVERAGE,
-        MAX
-    }
 
 
 }

@@ -8,6 +8,7 @@ import com.optimizer.http.HttpClientFactory;
 import com.optimizer.mail.MailSender;
 import com.optimizer.mail.config.MailConfig;
 import com.optimizer.resources.ThreadPoolResource;
+import com.optimizer.threadpool.HystrixThreadPoolHostService;
 import com.optimizer.threadpool.HystrixThreadPoolService;
 import com.optimizer.threadpool.config.ThreadPoolConfig;
 import io.dropwizard.Application;
@@ -65,13 +66,27 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .serviceVsOwnerMap(serviceVsOwnerMap)
                 .mailConfig(mailConfig)
                 .grafanaConfig(grafanaConfig)
+                .clusters(configuration.getClusters())
+                .build();
+
+        HystrixThreadPoolHostService hystrixThreadPoolHostService = HystrixThreadPoolHostService.builder()
+                .grafanaService(grafanaService)
+                .threadPoolConfig(hystrixThreadPoolConfig)
+                .mailSender(mailSender)
+                .serviceVsOwnerMap(serviceVsOwnerMap)
+                .mailConfig(mailConfig)
+                .grafanaConfig(grafanaConfig)
+                .clusters(configuration.getClusters())
                 .build();
 
         environment.lifecycle()
                 .manage(mailSender);
 
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
+        /*scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
+                                                     hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+                                                    );*/
+        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolHostService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
                                                      hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
                                                     );
 

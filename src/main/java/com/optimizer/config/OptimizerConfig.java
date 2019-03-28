@@ -29,4 +29,6 @@ public class OptimizerConfig extends Configuration {
 
     private MailConfig mailConfig;
 
+    private List<String> clusters;
+
 }

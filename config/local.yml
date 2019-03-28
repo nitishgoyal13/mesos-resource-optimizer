@@ -11,7 +11,7 @@ grafanaConfig:
     - name: Authorization
       value: Bearer eyJrIjoiWkxRWEJPS3ZUNURUbTlsQ2VEalVQUGpLSDhZZW9RMGgiLCJuIjoib3B0aW1pemVyIiwiaWQiOjF9
   url: http://prd-grafana001.phonepe.nm1/api/datasources/proxy/10/query?db=riemann_metrics&q=%s
-  prefix: phonepe.prod.api.HystrixThreadPool
+  prefix: phonepe.prod
 
 threadPoolConfig:
   thresholdMinUsagePercentage: 50
@@ -117,3 +117,6 @@ mailConfig:
 
 logging:
   level: INFO
+
+clusters:
+  - api

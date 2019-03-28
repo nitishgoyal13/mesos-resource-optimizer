@@ -42,20 +42,25 @@ public class GrafanaService {
             String query = String.join(";", queryChunk);
             query = String.format(QUERY, query);
             HttpResponse response = getHttpResponse(client, query, grafanaConfig);
-            if(response != null){
+            if(response != null) {
                 responses.add(response);
             }
         }
         return responses;
     }
 
+    public HttpResponse execute(String query) {
+        query = String.format(QUERY, query);
+        return getHttpResponse(client, query, grafanaConfig);
+    }
+
+
     public Map<String, List<String>> getServiceVsPoolList(String clusterName) {
         Map<String, List<String>> serviceVsPoolList = new HashMap<>();
         try {
-            String poolListQuery = String.format(POOL_LIST_QUERY, grafanaConfig.getPrefix());
-            String query = String.format(QUERY, poolListQuery);
+            String poolListQuery = String.format(POOL_LIST_QUERY, grafanaConfig.getPrefix(), clusterName);
 
-            HttpResponse response = getHttpResponse(client, query, grafanaConfig);
+            HttpResponse response = getHttpResponse(client, poolListQuery, grafanaConfig);
             if(response == null) {
                 return Collections.emptyMap();
             }
@@ -66,7 +71,7 @@ public class GrafanaService {
                 LOGGER.error("Error in getting value from data: " + data);
                 return Collections.emptyMap();
             }
-            String poolListPattern = String.format(POOL_LIST_PATTERN, grafanaConfig.getPrefix());
+            String poolListPattern = String.format(POOL_LIST_PATTERN, grafanaConfig.getPrefix(), clusterName);
             Pattern pattern = Pattern.compile(poolListPattern);
             for(int i = 0; i < serviceJsonArray.length(); i++) {
                 String metrics = ((JSONArray)serviceJsonArray.get(i)).get(0)
