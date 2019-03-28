@@ -90,9 +90,9 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .manage(mailSender);
 
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2);
-//        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
-//                                                     hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-//                                                    );
+        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
+                                                     hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+                                                    );
         scheduledExecutorService.scheduleAtFixedRate(mesosMonitorService, mesosMonitorConfig.getInitialDelayInSeconds(),
                 mesosMonitorConfig.getIntervalInSeconds(), TimeUnit.SECONDS
         );

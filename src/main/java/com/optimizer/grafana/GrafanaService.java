@@ -48,11 +48,6 @@ public class GrafanaService {
             if(response == null) {
                 return Collections.emptyList();
             }
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                LOGGER.warn(e.getMessage());
-            }
         }
         return responses;
     }
@@ -139,9 +134,9 @@ public class GrafanaService {
         }
     }
 
-    public Map<String, Integer> executeQueriesAndGetMapWithEntity(List<String> queries, List<String> entities,
+    public Map<String, Long> executeQueriesAndGetMapWithEntity(List<String> queries, List<String> entities,
                                                        ExtractionStrategy extractionStrategy) throws Exception {
-        Map<String, Integer> entityVsResult = new HashMap<>();
+        Map<String, Long> entityVsResult = new HashMap<>();
         int index = 0;
         for(List<String> queryChunk : Lists.partition(queries, PARTITION_SIZE)) {
             List<HttpResponse> httpResponses = execute(queryChunk);
@@ -162,7 +157,7 @@ public class GrafanaService {
                     if(jsonObject.has(RESULTS)) {
                         JSONArray resultArray = (JSONArray)jsonObject.get(RESULTS);
                         for(int resultIndex = 0; resultIndex < resultArray.length(); resultIndex++) {
-                            int result = getValueFromGrafanaResponse(resultArray.get(resultIndex)
+                            long result = getValueFromGrafanaResponse(resultArray.get(resultIndex)
                                     .toString(), extractionStrategy);
                             entityVsResult.put(entities.get(index), result);
                             index++;
@@ -178,7 +173,7 @@ public class GrafanaService {
         return entityVsResult;
     }
 
-    public static int getValueFromGrafanaResponse(String response, ExtractionStrategy extractionStrategy) {
+    public static long getValueFromGrafanaResponse(String response, ExtractionStrategy extractionStrategy) {
         JSONObject jsonObject = new JSONObject(response);
         JSONArray seriesJSONArray = getArrayFromJSONObject(jsonObject, SERIES);
         JSONObject seriesJSONObject = getObjectFromJSONArray(seriesJSONArray, INDEX_ZERO);

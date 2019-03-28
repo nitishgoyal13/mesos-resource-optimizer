@@ -56,34 +56,35 @@ public class MesosMonitorService implements Runnable {
     }
 
     private void handleMesosMonitor(List<String> apps) {
-        Map<String, Integer> appVsTotalCpu = executeMesosMonitorQuery(apps, APP_QUERY, TOTAL_CPU,
-                ExtractionStrategy.AVERAGE);
+        apps = apps.subList(1,2);
+        Map<String, Long> appVsTotalCpu = executeMesosMonitorQuery(apps, APP_QUERY, TOTAL_CPU,
+                ExtractionStrategy.MAX);
         if(CollectionUtils.isEmpty(appVsTotalCpu)) {
             LOGGER.error("Error in getting apps total CPU.");
             return;
         }
-        Map<String, Integer> appVsUsedCpu = executeMesosMonitorQuery(apps, APP_QUERY, USED_CPU,
+        Map<String, Long> appVsUsedCpu = executeMesosMonitorQuery(apps, APP_QUERY, USED_CPU,
                 ExtractionStrategy.MAX);
         if(CollectionUtils.isEmpty(appVsUsedCpu)) {
             LOGGER.error("Error in getting apps used CPU.");
             return;
         }
-        Map<String, Integer> appVsTotalMemory = executeMesosMonitorQuery(apps, APP_QUERY, TOTAL_MEMORY,
-                ExtractionStrategy.AVERAGE);
+        Map<String, Long> appVsTotalMemory = executeMesosMonitorQuery(apps, APP_QUERY, TOTAL_MEMORY,
+                ExtractionStrategy.MAX);
         if(CollectionUtils.isEmpty(appVsTotalMemory)) {
             LOGGER.error("Error in getting apps total Memory.");
             return;
         }
-        Map<String, Integer> appVsUsedMemory = executeMesosMonitorQuery(apps, APP_QUERY, USED_MEMORY,
+        Map<String, Long> appVsUsedMemory = executeMesosMonitorQuery(apps, APP_QUERY, USED_MEMORY,
                 ExtractionStrategy.MAX);
         if(CollectionUtils.isEmpty(appVsUsedMemory)) {
             LOGGER.error("Error in getting apps used Memory.");
             return;
         }
-        int totalCPU;
-        int usedCPU;
-        int totalMemory;
-        int usedMemory;
+        long totalCPU;
+        long usedCPU;
+        long totalMemory;
+        long usedMemory;
         for(String app: apps) {
             if(appVsTotalCpu.containsKey(app)) {
                 totalCPU = appVsTotalCpu.get(app);
@@ -117,9 +118,9 @@ public class MesosMonitorService implements Runnable {
                 }
             }
             if(totalCPU > 0 && usedCPU > 0) {
-                int usagePercentage = usedCPU * 100 / totalCPU;
+                long usagePercentage = usedCPU * 100 / totalCPU;
                 if(usagePercentage < mesosMonitorConfig.getThresholdMinCpuUsagePercentage()) {
-                    int reduceBy = ((totalCPU * mesosMonitorConfig.getThresholdMinCpuUsagePercentage()) / 100) - usedCPU;
+                    long reduceBy = ((totalCPU * mesosMonitorConfig.getThresholdMinCpuUsagePercentage()) / 100) - usedCPU;
                     if(reduceBy > mesosMonitorConfig.getCpuReduceByThreshold()) {
                         LOGGER.info(String.format("App: %s Total CPU: %s Used CPU: %s Reduce: %s",
                                 app, totalCPU, usedCPU, reduceBy
@@ -131,7 +132,7 @@ public class MesosMonitorService implements Runnable {
                     }
                 }
                 if(usagePercentage > mesosMonitorConfig.getThresholdMaxCpuUsagePercentage()) {
-                    int extendBy = usedCPU - ((totalCPU * mesosMonitorConfig.getThresholdMinCpuUsagePercentage()) / 100);
+                    long extendBy = usedCPU - ((totalCPU * mesosMonitorConfig.getThresholdMinCpuUsagePercentage()) / 100);
                     if(extendBy > mesosMonitorConfig.getCpuExtendByThreshold()) {
                         LOGGER.info(String.format("App: %s Total CPU: %s Used CPU: %s Extend: %s",
                                 app, totalCPU, usedCPU, extendBy
@@ -144,9 +145,9 @@ public class MesosMonitorService implements Runnable {
                 }
             }
             if(totalMemory > 0 && usedMemory > 0) {
-                int usagePercentage = usedMemory * 100 / totalMemory;
+                long usagePercentage = usedMemory * 100 / totalMemory;
                 if(usagePercentage < mesosMonitorConfig.getThresholdMinMemoryUsagePercentage()) {
-                    int reduceBy = ((totalMemory * mesosMonitorConfig.getThresholdMinMemoryUsagePercentage()) / 100) - usedMemory;
+                    long reduceBy = ((totalMemory * mesosMonitorConfig.getThresholdMinMemoryUsagePercentage()) / 100) - usedMemory;
                     if(reduceBy > mesosMonitorConfig.getMemoryReduceByThreshold()) {
                         LOGGER.info(String.format("App: %s Total Memory: %s Used Memory: %s Reduce: %s",
                                 app, totalMemory, usedMemory, reduceBy
@@ -158,7 +159,7 @@ public class MesosMonitorService implements Runnable {
                     }
                 }
                 if(usagePercentage > mesosMonitorConfig.getThresholdMaxMemoryUsagePercentage()) {
-                    int extendBy = usedMemory - ((totalMemory * mesosMonitorConfig.getThresholdMinMemoryUsagePercentage()) / 100);
+                    long extendBy = usedMemory - ((totalMemory * mesosMonitorConfig.getThresholdMinMemoryUsagePercentage()) / 100);
                     if(extendBy > mesosMonitorConfig.getMemoryExtendByThreshold()) {
                         LOGGER.info(String.format("App: %s Total Memory: %s Used Memory: %s Extend: %s",
                                 app, totalMemory, usedMemory, extendBy
@@ -174,7 +175,7 @@ public class MesosMonitorService implements Runnable {
 
     }
 
-    private Map<String, Integer> executeMesosMonitorQuery(List<String> apps, String query, String metricName,
+    private Map<String, Long> executeMesosMonitorQuery(List<String> apps, String query, String metricName,
                                                           ExtractionStrategy extractionStrategy) {
         List<String> queries = new ArrayList<>();
         for(String app : CollectionUtils.nullAndEmptySafeValueList(apps)) {
@@ -182,7 +183,7 @@ public class MesosMonitorService implements Runnable {
                     Integer.toString(mesosMonitorConfig.getQueryDurationInHours()));
             queries.add(poolQuery);
         }
-        Map<String, Integer> responses;
+        Map<String, Long> responses;
         try {
             responses = grafanaService.executeQueriesAndGetMapWithEntity(queries, apps, extractionStrategy);
             if(CollectionUtils.isEmpty(responses)) {

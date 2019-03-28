@@ -82,33 +82,45 @@ public class OptimizerUtils {
         return null;
     }
 
-    public static int getMaxValueFromJsonArray(JSONArray jsonArray) {
+    public static long getMaxValueFromJsonArray(JSONArray jsonArray) {
         if(jsonArray == null) {
             return NULL_VALUE;
         }
-        int maxValue = NULL_VALUE;
+        long maxValue = NULL_VALUE;
         for(int index = 0; index < jsonArray.length(); index++) {
             JSONArray array = (JSONArray)jsonArray.get(index);
-            if(array != null && array.length() > 1 && array.get(INDEX_ONE) instanceof Integer) {
-                if((int)array.get(INDEX_ONE) > maxValue) {
+            if(array != null && array.length() > 1) {
+                if(array.get(INDEX_ONE) instanceof Integer && (int)array.get(INDEX_ONE) > maxValue) {
                     maxValue = (int)array.get(INDEX_ONE);
+                } else if(array.get(INDEX_ONE) instanceof Double && ((Double)array.get(INDEX_ONE)).intValue() > maxValue) {
+                    maxValue = ((Double)array.get(INDEX_ONE)).longValue();
+                } else if(array.get(INDEX_ONE) instanceof Long && ((Long)array.get(INDEX_ONE)) > maxValue){
+                    maxValue = (Long)array.get(INDEX_ONE);
                 }
             }
         }
         return maxValue;
     }
 
-    public static int getAvgValueFromJsonArray(JSONArray jsonArray) {
+    public static long getAvgValueFromJsonArray(JSONArray jsonArray) {
         if(jsonArray == null) {
             return NULL_VALUE;
         }
-        int sumOfValues = 0;
+        long sumOfValues = 0;
         int values = 0;
         for(int index = 0; index < jsonArray.length(); index++) {
             JSONArray array = (JSONArray)jsonArray.get(index);
-            if(array != null && array.length() > 1 && array.get(INDEX_ONE) instanceof Integer) {
-                sumOfValues += (int)array.get(INDEX_ONE);
-                values++;
+            if(array != null && array.length() > 1) {
+                if(array.get(INDEX_ONE) instanceof Integer) {
+                    sumOfValues += (int)array.get(INDEX_ONE);
+                    values++;
+                } else if(array.get(INDEX_ONE) instanceof Double) {
+                    sumOfValues += ((Double)array.get(INDEX_ONE)).longValue();
+                    values++;
+                } else if(array.get(INDEX_ONE) instanceof Long) {
+                    sumOfValues += (Long)array.get(INDEX_ONE);
+                    values++;
+                }
             }
         }
         if(values > 0) {

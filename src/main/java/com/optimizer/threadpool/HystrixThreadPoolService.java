@@ -72,22 +72,22 @@ public class HystrixThreadPoolService implements Runnable {
             return;
         }
 
-        Map<String, Integer> hystrixPoolVsMaxPool = executePoolQuery(hystrixPools, MAX_POOL_QUERY, ExtractionStrategy.AVERAGE);
+        Map<String, Long> hystrixPoolVsMaxPool = executePoolQuery(hystrixPools, MAX_POOL_QUERY, ExtractionStrategy.AVERAGE);
         if(CollectionUtils.isEmpty(hystrixPoolVsMaxPool)) {
             LOGGER.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
             return;
         }
-        Map<String, Integer> hystrixPoolVsPoolsUsage = executePoolQuery(hystrixPools, POOL_USAGE_QUERY, ExtractionStrategy.MAX);
+        Map<String, Long> hystrixPoolVsPoolsUsage = executePoolQuery(hystrixPools, POOL_USAGE_QUERY, ExtractionStrategy.MAX);
         if(CollectionUtils.isEmpty(hystrixPoolVsPoolsUsage)) {
             LOGGER.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = []");
             return;
         }
         String pool;
-        int maxPool;
-        int poolUsage;
+        long maxPool;
+        long poolUsage;
         for(String hystrixPool : hystrixPools) {
-            int reduceBy = 0;
-            int extendBy = 0;
+            long reduceBy = 0;
+            long extendBy = 0;
             pool = hystrixPool;
             if(hystrixPoolVsMaxPool.containsKey(pool)) {
                 maxPool = hystrixPoolVsMaxPool.get(pool);
@@ -104,7 +104,7 @@ public class HystrixThreadPoolService implements Runnable {
             if(maxPool <= 0 || poolUsage <= 0) {
                 continue;
             }
-            int usagePercentage = poolUsage * 100 / maxPool;
+            long usagePercentage = poolUsage * 100 / maxPool;
             if(usagePercentage < threadPoolConfig.getThresholdMinUsagePercentage()) {
                 reduceBy = ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100) - poolUsage;
                 if(reduceBy > threadPoolConfig.getReduceByThreshold()) {
@@ -128,7 +128,7 @@ public class HystrixThreadPoolService implements Runnable {
         }
     }
 
-    private Map<String, Integer> executePoolQuery(List<String> hystrixPools, String query, ExtractionStrategy extractionStrategy) {
+    private Map<String, Long> executePoolQuery(List<String> hystrixPools, String query, ExtractionStrategy extractionStrategy) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
             String poolQuery = String.format(query, threadPoolConfig.getPrefix(), hystrixPool,
@@ -136,7 +136,7 @@ public class HystrixThreadPoolService implements Runnable {
                                             );
             queries.add(poolQuery);
         }
-        Map<String, Integer> responses;
+        Map<String, Long> responses;
         try {
             responses = grafanaService.executeQueriesAndGetMapWithEntity(queries, hystrixPools, extractionStrategy);
             if(CollectionUtils.isEmpty(responses)) {
