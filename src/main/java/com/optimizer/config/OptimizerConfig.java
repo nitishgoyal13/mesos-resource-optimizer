@@ -31,4 +31,6 @@ public class OptimizerConfig extends Configuration {
 
     private List<String> clusters;
 
+    private AerospikeConfig aerospikeConfig;
+
 }

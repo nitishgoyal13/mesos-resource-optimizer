@@ -6,6 +6,7 @@ import com.optimizer.grafana.GrafanaService;
 import com.optimizer.grafana.config.GrafanaConfig;
 import com.optimizer.mail.MailSender;
 import com.optimizer.mail.config.MailConfig;
+import com.optimizer.model.OptimisationResponse;
 import com.optimizer.model.OptimisedConfig;
 import com.optimizer.threadpool.config.ThreadPoolConfig;
 import lombok.Builder;
@@ -83,6 +84,13 @@ public class HystrixThreadPoolHostService implements Runnable {
                 optimisedConfigs.add(optimisedConfig);
             }
         }
+        pushToDb(OptimisationResponse.builder()
+                         .configs(optimisedConfigs)
+                         .build());
+    }
+
+    private void pushToDb(OptimisationResponse optimisationResponse) {
+
     }
 
     private void handleHystrixPoolByHost(String cluster, String serviceName, Map<String, List<String>> serviceVsPoolList,
