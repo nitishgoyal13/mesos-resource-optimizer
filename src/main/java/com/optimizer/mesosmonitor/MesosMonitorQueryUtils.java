@@ -11,6 +11,6 @@ public class MesosMonitorQueryUtils {
     public static final String USED_MEMORY = "usedMemory";
 
     public static final String APP_QUERY =
-            "SELECT sum(\"value\") FROM \"%s.%s.metric.%s\" WHERE time > now() - %sh " +
+            "SELECT sum(\"value\") FROM \"%s.mesosmonitor.%s.metric.%s\" WHERE time > now() - %sh " +
                     "group by time(30s) fill(null)";
 }

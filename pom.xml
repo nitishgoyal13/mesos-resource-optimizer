@@ -39,6 +39,7 @@
         <lombok.version>1.16.16</lombok.version>
         <project.version>1.0.0</project.version>
         <dropwizard.riemann.version>1.3.5-4</dropwizard.riemann.version>
+        <aerospike.version>4.2.2</aerospike.version>
     </properties>
 
     <repositories>
@@ -189,6 +190,11 @@
                     <artifactId>lombok</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.aerospike</groupId>
+            <artifactId>aerospike-client</artifactId>
+            <version>${aerospike.version}</version>
         </dependency>
     </dependencies>
 

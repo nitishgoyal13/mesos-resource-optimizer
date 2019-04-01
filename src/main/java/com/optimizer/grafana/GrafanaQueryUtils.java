@@ -6,11 +6,14 @@ package com.optimizer.grafana;
 @SuppressWarnings("WeakerAccess")
 public class GrafanaQueryUtils {
 
-    public static final String POOL_LIST_QUERY = "SHOW MEASUREMENTS with measurement = /%s.*.propertyValue_corePoolSize/";
+    public static final String POOL_LIST_QUERY =
+            "SHOW MEASUREMENTS with measurement = /%s.%s.HystrixThreadPool.*.propertyValue_corePoolSize/;";
 
-    public static final String POOL_LIST_PATTERN = "%s.(.*).propertyValue_corePoolSize";
+//    public static final String POOL_LIST_PATTERN = "%s.(.*).propertyValue_corePoolSize";
 
-    public static final String APP_LIST_QUERY = "SHOW MEASUREMENTS with measurement = /%s.*.metric.totalCpu/";
+    public static final String APP_LIST_QUERY = "SHOW MEASUREMENTS with measurement = /%s.mesosmonitor.*.metric.totalCpu/";
 
-    public static final String APP_LIST_PATTERN = "%s.(.*).metric.totalCpu";
+    public static final String APP_LIST_PATTERN = "%s.mesosmonitor.(.*).metric.totalCpu";
+
+    public static final String POOL_LIST_PATTERN = "%s.%s.HystrixThreadPool.(.*).propertyValue_corePoolSize";
 }

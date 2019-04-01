@@ -34,4 +34,8 @@ public class OptimizerConfig extends Configuration {
 
     private MesosMonitorConfig mesosMonitorConfig;
 
+    private List<String> clusters;
+
+    private AerospikeConfig aerospikeConfig;
+
 }

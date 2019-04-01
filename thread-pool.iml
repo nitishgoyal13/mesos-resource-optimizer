@@ -229,5 +229,9 @@
     <orderEntry type="library" name="Maven: com.codahale.metrics:metrics-core:3.0.1" level="project" />
     <orderEntry type="library" name="Maven: io.riemann:riemann-java-client:0.4.5" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty:3.6.1.Final" level="project" />
+    <orderEntry type="library" name="Maven: com.aerospike:aerospike-client:4.2.2" level="project" />
+    <orderEntry type="library" name="Maven: org.gnu:gnu-crypto:2.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.luaj:luaj-jse:3.0" level="project" />
+    <orderEntry type="library" name="Maven: org.mindrot:jbcrypt:0.3m" level="project" />
   </component>
 </module>

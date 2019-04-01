@@ -11,6 +11,7 @@ grafanaConfig:
     - name: Authorization
       value: Bearer eyJrIjoiWkxRWEJPS3ZUNURUbTlsQ2VEalVQUGpLSDhZZW9RMGgiLCJuIjoib3B0aW1pemVyIiwiaWQiOjF9
   url: http://prd-grafana001.phonepe.nm1/api/datasources/proxy/10/query?db=riemann_metrics&q=%s
+  prefix: phonepe.prod
 
 threadPoolConfig:
   thresholdMinUsagePercentage: 50
@@ -20,7 +21,6 @@ threadPoolConfig:
   intervalInSeconds: 86400
   reduceByThreshold: 50
   extendByThreshold: 50
-  prefix: phonepe.prod.api.HystrixThreadPool
 
 mesosMonitorConfig:
   thresholdMinCpuUsagePercentage: 50
@@ -34,7 +34,6 @@ mesosMonitorConfig:
   memoryReduceByThreshold: 50
   cpuExtendByThreshold: 50
   memoryExtendByThreshold: 50
-  prefix: phonepe.prod.mesosmonitor
   mesosEndpoint: http://stg-appmesosm101.phonepe.nm2:8080
 
 serviceConfigs:
@@ -136,3 +135,6 @@ mailConfig:
 
 logging:
   level: INFO
+
+clusters:
+  - api

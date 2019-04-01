@@ -29,7 +29,8 @@ import static com.optimizer.util.OptimizerUtils.*;
 public class HystrixThreadPoolService implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
-    private static final String CLUSTER_NAME = "api";
+    private static final String TAGS = "tags";
+    private static final String HOST = "host";
 
     private GrafanaService grafanaService;
     private ThreadPoolConfig threadPoolConfig;
@@ -37,47 +38,52 @@ public class HystrixThreadPoolService implements Runnable {
     private Map<String, String> serviceVsOwnerMap;
     private MailConfig mailConfig;
     private GrafanaConfig grafanaConfig;
+    private List<String> clusters;
 
     @Builder
     public HystrixThreadPoolService(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig, MailSender mailSender,
-                                    Map<String, String> serviceVsOwnerMap, MailConfig mailConfig, GrafanaConfig grafanaConfig) {
+                                    Map<String, String> serviceVsOwnerMap, MailConfig mailConfig, GrafanaConfig grafanaConfig,
+                                    List<String> clusters) {
         this.grafanaService = grafanaService;
         this.threadPoolConfig = threadPoolConfig;
         this.mailSender = mailSender;
         this.serviceVsOwnerMap = serviceVsOwnerMap;
         this.mailConfig = mailConfig;
         this.grafanaConfig = grafanaConfig;
+        this.clusters = clusters;
     }
 
     @Override
     public void run() {
-        Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(threadPoolConfig.getPrefix());
-        if(CollectionUtils.isEmpty(serviceVsPoolList)) {
-            LOGGER.error("Error in getting serviceVsPoolList. Got empty map");
-            return;
-        }
-        for(String service : CollectionUtils.nullAndEmptySafeValueList(serviceVsPoolList.keySet())) {
-            String ownerEmail = mailConfig.getDefaultOwnersEmails();
-            if(serviceVsOwnerMap.containsKey(service)) {
-                ownerEmail = serviceVsOwnerMap.get(service);
+        for(String cluster : CollectionUtils.nullSafeList(clusters)) {
+            Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(grafanaConfig.getPrefix(), cluster);
+            if(CollectionUtils.isEmpty(serviceVsPoolList)) {
+                LOGGER.error("Error in getting serviceVsPoolList. Got empty map");
+                continue;
             }
-            handleHystrixPool(service, serviceVsPoolList, ownerEmail);
+            for(String service : CollectionUtils.nullAndEmptySafeValueList(serviceVsPoolList.keySet())) {
+                String ownerEmail = mailConfig.getDefaultOwnersEmails();
+                if(serviceVsOwnerMap.containsKey(service)) {
+                    ownerEmail = serviceVsOwnerMap.get(service);
+                }
+                handleHystrixPool(service, serviceVsPoolList, ownerEmail, cluster);
+            }
         }
     }
 
-    private void handleHystrixPool(String serviceName, Map<String, List<String>> serviceVsPoolList, String ownerEmail) {
+    private void handleHystrixPool(String serviceName, Map<String, List<String>> serviceVsPoolList, String ownerEmail, String cluster) {
         List<String> hystrixPools = serviceVsPoolList.get(serviceName);
         if(CollectionUtils.isEmpty(hystrixPools)) {
             LOGGER.error("Error in getting hystrix pool list for Service: " + serviceName + ". Got hystrixPools = []");
             return;
         }
 
-        Map<String, Long> hystrixPoolVsMaxPool = executePoolQuery(hystrixPools, MAX_POOL_QUERY, ExtractionStrategy.AVERAGE);
+        Map<String, Long> hystrixPoolVsMaxPool = executePoolQuery(hystrixPools, MAX_POOL_QUERY, ExtractionStrategy.AVERAGE, cluster);
         if(CollectionUtils.isEmpty(hystrixPoolVsMaxPool)) {
             LOGGER.error("Error in getting hystrix pools core list for Service: " + serviceName + ". Got poolsCore = []");
             return;
         }
-        Map<String, Long> hystrixPoolVsPoolsUsage = executePoolQuery(hystrixPools, POOL_USAGE_QUERY, ExtractionStrategy.MAX);
+        Map<String, Long> hystrixPoolVsPoolsUsage = executePoolQuery(hystrixPools, POOL_USAGE_QUERY, ExtractionStrategy.MAX, cluster);
         if(CollectionUtils.isEmpty(hystrixPoolVsPoolsUsage)) {
             LOGGER.error("Error in getting hystrix pools usage list for Service: " + serviceName + ". Got poolsUsage = []");
             return;
@@ -128,10 +134,10 @@ public class HystrixThreadPoolService implements Runnable {
         }
     }
 
-    private Map<String, Long> executePoolQuery(List<String> hystrixPools, String query, ExtractionStrategy extractionStrategy) {
+    private Map<String, Long> executePoolQuery(List<String> hystrixPools, String query, ExtractionStrategy extractionStrategy, String cluster) {
         List<String> queries = new ArrayList<>();
         for(String hystrixPool : CollectionUtils.nullAndEmptySafeValueList(hystrixPools)) {
-            String poolQuery = String.format(query, threadPoolConfig.getPrefix(), hystrixPool,
+            String poolQuery = String.format(query, grafanaConfig.getPrefix(), cluster, hystrixPool,
                                              Integer.toString(threadPoolConfig.getQueryDurationInHours())
                                             );
             queries.add(poolQuery);
@@ -171,6 +177,37 @@ public class HystrixThreadPoolService implements Runnable {
                 ownerEmail, Integer.toString(threshodMaxUsagePercentage), serviceName, pool, Integer.toString(maxPool),
                 Integer.toString(poolUsage), Integer.toString(extendBy)
         );
+    }
+
+    private Map<String, Long> executeGrafanaQueries(List<String> queries, List<String> hystrixPools,
+                                                       ExtractionStrategy extractionStrategy) throws Exception {
+        Map<String, Long> hystrixPoolVsResult = new HashMap<>();
+        int hystrixPoolIndex = 0;
+        List<HttpResponse> httpResponses = grafanaService.execute(queries);
+        if(CollectionUtils.isEmpty(httpResponses)) {
+            return Collections.emptyMap();
+        }
+        for(HttpResponse httpResponse : httpResponses) {
+            int status = httpResponse.getStatusLine()
+                    .getStatusCode();
+            if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
+                LOGGER.error("Error in Http get, Status Code: " + httpResponse.getStatusLine()
+                        .getStatusCode() + " received Response: " + httpResponse);
+                return Collections.emptyMap();
+            }
+            String data = EntityUtils.toString(httpResponse.getEntity());
+            JSONObject jsonObject = new JSONObject(data);
+            if(jsonObject.has(RESULTS)) {
+                JSONArray resultArray = (JSONArray)jsonObject.get(RESULTS);
+                for(int resultIndex = 0; resultIndex < resultArray.length(); resultIndex++) {
+                    long result = ThreadPoolUtils.getValueFromGrafanaResponse(resultArray.get(resultIndex)
+                                                                     .toString(), extractionStrategy);
+                    hystrixPoolVsResult.put(hystrixPools.get(hystrixPoolIndex), result);
+                    hystrixPoolIndex++;
+                }
+            }
+        }
+        return hystrixPoolVsResult;
     }
 
 }

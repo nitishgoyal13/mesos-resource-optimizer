@@ -4,7 +4,6 @@ import com.collections.CollectionUtils;
 import com.google.common.collect.Lists;
 import com.optimizer.grafana.config.GrafanaConfig;
 import com.optimizer.util.OptimizerUtils;
-import io.swagger.models.auth.In;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -44,32 +43,33 @@ public class GrafanaService {
             String query = String.join(";", queryChunk);
             query = String.format(QUERY, query);
             HttpResponse response = getHttpResponse(client, query, grafanaConfig);
-            responses.add(response);
-            if(response == null) {
-                return Collections.emptyList();
+            if(response != null) {
+                responses.add(response);
             }
         }
         return responses;
     }
 
-    public Map<String, List<String>> getServiceVsPoolList(String prefix) {
+    public HttpResponse execute(String query) {
+        query = String.format(QUERY, query);
+        return getHttpResponse(client, query, grafanaConfig);
+    }
+
+    public Map<String, List<String>> getServiceVsPoolList(String prefix, String clusterName) {
         Map<String, List<String>> serviceVsPoolList = new HashMap<>();
         try {
-            String poolListQuery = String.format(POOL_LIST_QUERY, prefix);
-            String query = String.format(QUERY, poolListQuery);
-
-            HttpResponse response = getHttpResponse(client, query, grafanaConfig);
+            String poolListQuery = String.format(POOL_LIST_QUERY, prefix, clusterName);
+            HttpResponse response = getHttpResponse(client, poolListQuery, grafanaConfig);
             if(response == null) {
                 return Collections.emptyMap();
             }
-
             String data = EntityUtils.toString(response.getEntity());
             JSONArray serviceJsonArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
             if(serviceJsonArray == null) {
                 LOGGER.error("Error in getting value from data: " + data);
                 return Collections.emptyMap();
             }
-            String poolListPattern = String.format(POOL_LIST_PATTERN, prefix);
+            String poolListPattern = String.format(POOL_LIST_PATTERN, prefix, clusterName);
             Pattern pattern = Pattern.compile(poolListPattern);
             for(int i = 0; i < serviceJsonArray.length(); i++) {
                 String metrics = ((JSONArray)serviceJsonArray.get(i)).get(0)

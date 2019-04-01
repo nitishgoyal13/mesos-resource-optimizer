@@ -12,8 +12,6 @@ import javax.ws.rs.DefaultValue;
 @Builder
 public class MesosMonitorConfig {
 
-    private String prefix;
-
     private String mesosEndpoint;
 
     private int thresholdMinCpuUsagePercentage = 50;

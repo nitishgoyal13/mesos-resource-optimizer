@@ -31,6 +31,4 @@ public class ThreadPoolConfig {
 
     @DefaultValue("50")
     private int extendByThreshold = 50;
-
-    private String prefix;
 }

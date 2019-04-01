@@ -2,6 +2,7 @@ package com.optimizer.mesosmonitor;
 
 import com.collections.CollectionUtils;
 import com.optimizer.grafana.GrafanaService;
+import com.optimizer.grafana.config.GrafanaConfig;
 import com.optimizer.mail.MailSender;
 import com.optimizer.mail.config.MailConfig;
 import com.optimizer.mesosmonitor.config.MesosMonitorConfig;
@@ -33,21 +34,24 @@ public class MesosMonitorService implements Runnable {
     private MailConfig mailConfig;
     private Map<String, String> appVsOwnerMap;
     private HttpClient client;
+    private GrafanaConfig grafanaConfig;
 
     @Builder
     public MesosMonitorService(GrafanaService grafanaService, MesosMonitorConfig mesosMonitorConfig, MailSender mailSender,
-                               MailConfig mailConfig, Map<String, String> appVsOwnerMap, HttpClient client) {
+                               MailConfig mailConfig, Map<String, String> appVsOwnerMap, HttpClient client,
+                               GrafanaConfig grafanaConfig) {
         this.grafanaService = grafanaService;
         this.mesosMonitorConfig = mesosMonitorConfig;
         this.mailSender = mailSender;
         this.mailConfig = mailConfig;
         this.appVsOwnerMap = appVsOwnerMap;
         this.client = client;
+        this.grafanaConfig = grafanaConfig;
     }
 
     @Override
     public void run() {
-        List<String> apps = grafanaService.getAppList(mesosMonitorConfig.getPrefix());
+        List<String> apps = grafanaService.getAppList(grafanaConfig.getPrefix());
         if(CollectionUtils.isEmpty(apps)) {
             LOGGER.error("Error in getting apps. Got empty list");
             return;
@@ -56,6 +60,7 @@ public class MesosMonitorService implements Runnable {
     }
 
     private void handleMesosMonitor(List<String> apps) {
+        apps = apps.subList(1,5);
         Map<String, Long> appVsTotalCpu = executeMesosMonitorQuery(apps, APP_QUERY, TOTAL_CPU,
                 ExtractionStrategy.MAX);
         if(CollectionUtils.isEmpty(appVsTotalCpu)) {
@@ -109,12 +114,9 @@ public class MesosMonitorService implements Runnable {
                 LOGGER.error(String.format("App: %s, not present in appVsUsedMemory map", app));
                 continue;
             }
-            String appName = getAppName(app);
             String ownerEmail = mailConfig.getDefaultOwnersEmails();
-            if(appName != null) {
-                if(appVsOwnerMap.containsKey(appName)) {
-                    ownerEmail = appVsOwnerMap.get(appName);
-                }
+            if(appVsOwnerMap.containsKey(app)) {
+                ownerEmail = appVsOwnerMap.get(app);
             }
             if(totalCPU > 0 && usedCPU > 0) {
                 long usagePercentage = usedCPU * 100 / totalCPU;
@@ -178,7 +180,7 @@ public class MesosMonitorService implements Runnable {
                                                           ExtractionStrategy extractionStrategy) {
         List<String> queries = new ArrayList<>();
         for(String app : CollectionUtils.nullAndEmptySafeValueList(apps)) {
-            String poolQuery = String.format(query, mesosMonitorConfig.getPrefix(), app, metricName,
+            String poolQuery = String.format(query, grafanaConfig.getPrefix(), app, metricName,
                     Integer.toString(mesosMonitorConfig.getQueryDurationInHours()));
             queries.add(poolQuery);
         }
@@ -222,29 +224,29 @@ public class MesosMonitorService implements Runnable {
         );
     }
 
-    private String getAppName(String appId) {
-        try {
-            HttpGet request = new HttpGet(mesosMonitorConfig.getMesosEndpoint() + "/v2/apps/" + appId);
-            HttpResponse response = client.execute(request);
-            if(response == null) {
-                return null;
-            }
-            int status = response.getStatusLine()
-                    .getStatusCode();
-            if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
-                LOGGER.error("Error in Http get, Status Code: " + response.getStatusLine()
-                        .getStatusCode() + " received Response: " + response);
-                return null;
-            }
-            String data = EntityUtils.toString(response.getEntity());
-            JSONObject jsonObject = new JSONObject(data);
-            JSONObject appJsonObject = getObjectFromJSONObject(jsonObject, "app");
-            JSONObject labelsJsonObject = getObjectFromJSONObject(appJsonObject, "labels");
-            return getStringFromJSONObject(labelsJsonObject, "traefik.backend");
-        } catch (Exception e) {
-            LOGGER.error("Error in getting app name: " + e.getMessage(), e);
-            return null;
-        }
-    }
+//    private String getAppName(String appId) {
+//        try {
+//            HttpGet request = new HttpGet(mesosMonitorConfig.getMesosEndpoint() + "/v2/apps/" + appId);
+//            HttpResponse response = client.execute(request);
+//            if(response == null) {
+//                return null;
+//            }
+//            int status = response.getStatusLine()
+//                    .getStatusCode();
+//            if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
+//                LOGGER.error("Error in Http get, Status Code: " + response.getStatusLine()
+//                        .getStatusCode() + " received Response: " + response);
+//                return null;
+//            }
+//            String data = EntityUtils.toString(response.getEntity());
+//            JSONObject jsonObject = new JSONObject(data);
+//            JSONObject appJsonObject = getObjectFromJSONObject(jsonObject, "app");
+//            JSONObject labelsJsonObject = getObjectFromJSONObject(appJsonObject, "labels");
+//            return getStringFromJSONObject(labelsJsonObject, "traefik.backend");
+//        } catch (Exception e) {
+//            LOGGER.error("Error in getting app name: " + e.getMessage(), e);
+//            return null;
+//        }
+//    }
 
 }
