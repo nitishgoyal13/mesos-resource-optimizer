@@ -98,8 +98,8 @@ public class GrafanaService {
     public List<String> getAppList(String prefix) {
         List<String> appList = new ArrayList<>();
         try {
-            String poolListQuery = String.format(APP_LIST_QUERY, prefix);
-            String query = String.format(QUERY, poolListQuery);
+            String appListQuery = String.format(APP_LIST_QUERY, prefix);
+            String query = String.format(QUERY, appListQuery);
 
             HttpResponse response = getHttpResponse(client, query, grafanaConfig);
             if(response == null) {
@@ -112,8 +112,8 @@ public class GrafanaService {
                 LOGGER.error("Error in getting value from data: " + data);
                 return Collections.emptyList();
             }
-            String poolListPattern = String.format(APP_LIST_PATTERN, prefix);
-            Pattern pattern = Pattern.compile(poolListPattern);
+            String appListPattern = String.format(APP_LIST_PATTERN, prefix);
+            Pattern pattern = Pattern.compile(appListPattern);
             for(int i = 0; i < serviceJsonArray.length(); i++) {
                 String metrics = ((JSONArray)serviceJsonArray.get(i)).get(0)
                         .toString();

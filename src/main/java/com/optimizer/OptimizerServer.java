@@ -67,6 +67,10 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .client(HttpClientFactory.getHttpClient())
                 .build();
         Map<String, String> serviceVsOwnerMap = createServiceVsOwnerMap(serviceConfigs);
+
+        List<AppConfig> appConfigs = configuration.getAppConfigs();
+        Map<String, String> appVsOwnerMap = createAppVsOwnerMap(appConfigs);
+
         HystrixThreadPoolService hystrixThreadPoolService = HystrixThreadPoolService.builder()
                 .grafanaService(grafanaService)
                 .threadPoolConfig(hystrixThreadPoolConfig)
@@ -87,13 +91,10 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .clusters(configuration.getClusters())
                 .build();
 
-        List<AppConfig> appConfigs = configuration.getAppConfigs();
-        Map<String, String> appVsOwnerMap = createAppVsOwnerMap(appConfigs);
         MesosMonitorService mesosMonitorService = MesosMonitorService.builder()
                 .grafanaService(grafanaService)
                 .mesosMonitorConfig(mesosMonitorConfig)
                 .appVsOwnerMap(appVsOwnerMap)
-                .client(HttpClientFactory.getHttpClient())
                 .mailConfig(mailConfig)
                 .mailSender(mailSender)
                 .grafanaConfig(grafanaConfig)
@@ -103,15 +104,15 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .manage(mailSender);
 
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(3);
-//        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
-//                                                     hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-//                                                    );
-        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolHostService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
+        /*scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
                                                      hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
                                                     );
-//        scheduledExecutorService.scheduleAtFixedRate(mesosMonitorService, mesosMonitorConfig.getInitialDelayInSeconds(),
-//                mesosMonitorConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-//        );
+        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolHostService, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
+                                                     hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+                                                    );*/
+        scheduledExecutorService.scheduleAtFixedRate(mesosMonitorService, mesosMonitorConfig.getInitialDelayInSeconds(),
+                                                     mesosMonitorConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+                                                    );
 
         environment.jersey()
                 .register(new ThreadPoolResource(hystrixThreadPoolService));
