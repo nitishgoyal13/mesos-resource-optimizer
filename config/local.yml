@@ -1,0 +1,59 @@
+server:
+  applicationConnectors:
+    - type: http
+      port: 17000
+  adminConnectors:
+    - type: http
+      port: 17001
+
+grafanaConfig:
+  headers:
+    - name: Authorization
+      value: Bearer eyJrIjoiWkxRWEJPS3ZUNURUbTlsQ2VEalVQUGpLSDhZZW9RMGgiLCJuIjoib3B0aW1pemVyIiwiaWQiOjF9
+  url: http://prd-grafana001.local.nm1/api/datasources/proxy/10/query?db=riemann_metrics&q=%s
+  prefix: local.prod
+
+threadPoolConfig:
+  enabled : false
+  thresholdMinUsagePercentage: 50
+  thresholdMaxUsagePercentage: 70
+  queryDurationInHours: 192
+  initialDelayInSeconds: 2
+  intervalInSeconds: 86400
+  reduceByThreshold: 50
+  extendByThreshold: 50
+
+mesosMonitorConfig:
+  enabled : true
+  queryDurationInHours: 192
+  initialDelayInSeconds: 2
+  intervalInSeconds: 86400
+  extractionStrategy: MAX
+  mesosEndpoint: http://stg-appmesosm101.local.nm2:8080
+  cpuThresholds:
+    enabled: true
+    minResourcePercentage: 50
+    maxResourcePercentage: 70
+    reduceThreshold: 5
+    extendThreshold: 5
+  memoryThresholds:
+    enabled: false
+    minResourcePercentage: 50
+    maxResourcePercentage: 70
+    reduceThreshold: 50
+    extendThreshold: 50
+
+serviceConfigs:
+
+mailConfig:
+  from: noreply@local.com
+  host: stg-smtp001.local.nm2
+  port: 25
+  defaultOwnersEnabled: true
+  defaultOwnersEmails: nitishgoyal13@gmail.com
+
+logging:
+  level: INFO
+
+clusters:
+  - api
