@@ -19,9 +19,13 @@ import java.util.concurrent.TimeUnit;
  ***/
 public class HttpClientFactory {
 
+    private HttpClientFactory() {
+    }
+
     private static final int MAX_CONNECTION_POOL_SIZE = 1000;
     private static final int MAX_CONNECTION_PER_ROUTE = 1000;
     private static final int IDLE_CONNECTION_TIMEOUT = 5;
+    private static final int VALIDATE_AFTER_INACTIVITY_IN_MS = 100;
 
     public static CloseableHttpClient getHttpClient() {
         // Create socket configuration
@@ -41,7 +45,7 @@ public class HttpClientFactory {
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
         connectionManager.setDefaultMaxPerRoute(MAX_CONNECTION_PER_ROUTE);
         connectionManager.setMaxTotal(MAX_CONNECTION_POOL_SIZE);
-        connectionManager.setValidateAfterInactivity(100);
+        connectionManager.setValidateAfterInactivity(VALIDATE_AFTER_INACTIVITY_IN_MS);
         connectionManager.closeIdleConnections(IDLE_CONNECTION_TIMEOUT, TimeUnit.MINUTES);
 
         connectionManager.setDefaultSocketConfig(socketConfig);

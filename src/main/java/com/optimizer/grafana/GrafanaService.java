@@ -2,7 +2,7 @@ package com.optimizer.grafana;
 
 import com.collections.CollectionUtils;
 import com.google.common.collect.Lists;
-import com.optimizer.grafana.config.GrafanaConfig;
+import com.optimizer.config.GrafanaConfig;
 import com.optimizer.util.OptimizerUtils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,6 +36,20 @@ public class GrafanaService {
     private HttpClient client;
     private GrafanaConfig grafanaConfig;
 
+    private static long getValueFromGrafanaResponse(String response, ExtractionStrategy extractionStrategy) {
+        JSONObject jsonObject = new JSONObject(response);
+        JSONArray seriesJSONArray = getArrayFromJSONObject(jsonObject, SERIES);
+        JSONObject seriesJSONObject = getObjectFromJSONArray(seriesJSONArray, INDEX_ZERO);
+        JSONArray valuesJSONArray = getArrayFromJSONObject(seriesJSONObject, VALUES);
+        switch (extractionStrategy) {
+            case MAX:
+                return getMaxValueFromJsonArray(valuesJSONArray);
+            case AVERAGE:
+                return getAvgValueFromJsonArray(valuesJSONArray);
+            default:
+                return getMaxValueFromJsonArray(valuesJSONArray);
+        }
+    }
 
     public List<HttpResponse> execute(List<String> queries) {
         List<HttpResponse> responses = new ArrayList<>();
@@ -66,7 +80,7 @@ public class GrafanaService {
             String data = EntityUtils.toString(response.getEntity());
             JSONArray serviceJsonArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
             if(serviceJsonArray == null) {
-                LOGGER.error("Error in getting value from data: " + data);
+                LOGGER.error("Error in getting value from data: {} ", data);
                 return Collections.emptyMap();
             }
             String poolListPattern = String.format(POOL_LIST_PATTERN, prefix, clusterName);
@@ -85,7 +99,7 @@ public class GrafanaService {
                         serviceVsPoolList.put(service, Lists.newArrayList(pool));
                     }
                 } else {
-                    LOGGER.error("Match not found for: " + metrics);
+                    LOGGER.error("Match not found for: {}", metrics);
                 }
             }
             return serviceVsPoolList;
@@ -109,7 +123,7 @@ public class GrafanaService {
             String data = EntityUtils.toString(response.getEntity());
             JSONArray serviceJsonArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
             if(serviceJsonArray == null) {
-                LOGGER.error("Error in getting value from data: " + data);
+                LOGGER.error("Error in getting value from data: {} ", data);
                 return Collections.emptyList();
             }
             String appListPattern = String.format(APP_LIST_PATTERN, prefix);
@@ -124,7 +138,7 @@ public class GrafanaService {
                         appList.add(appId);
                     }
                 } else {
-                    LOGGER.error("Match not found for: " + metrics);
+                    LOGGER.error("Match not found for: {}", metrics);
                 }
             }
             return appList;
@@ -135,7 +149,7 @@ public class GrafanaService {
     }
 
     public Map<String, Long> executeQueriesAndGetMapWithEntity(List<String> queries, List<String> entities,
-                                                       ExtractionStrategy extractionStrategy) throws Exception {
+                                                               ExtractionStrategy extractionStrategy) throws Exception {
         Map<String, Long> entityVsResult = new HashMap<>();
         int index = 0;
         for(List<String> queryChunk : Lists.partition(queries, PARTITION_SIZE)) {
@@ -148,8 +162,8 @@ public class GrafanaService {
                     int status = httpResponse.getStatusLine()
                             .getStatusCode();
                     if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
-                        LOGGER.error("Error in Http get, Status Code: " + httpResponse.getStatusLine()
-                                .getStatusCode() + " received Response: " + httpResponse);
+                        LOGGER.error("Error in Http get, Status Code: {} with received Response: {}", httpResponse.getStatusLine()
+                                .getStatusCode(), httpResponse);
                         return Collections.emptyMap();
                     }
                     String data = EntityUtils.toString(httpResponse.getEntity());
@@ -158,7 +172,7 @@ public class GrafanaService {
                         JSONArray resultArray = (JSONArray)jsonObject.get(RESULTS);
                         for(int resultIndex = 0; resultIndex < resultArray.length(); resultIndex++) {
                             long result = getValueFromGrafanaResponse(resultArray.get(resultIndex)
-                                    .toString(), extractionStrategy);
+                                                                              .toString(), extractionStrategy);
                             entityVsResult.put(entities.get(index), result);
                             index++;
                         }
@@ -171,20 +185,5 @@ public class GrafanaService {
             }
         }
         return entityVsResult;
-    }
-
-    public static long getValueFromGrafanaResponse(String response, ExtractionStrategy extractionStrategy) {
-        JSONObject jsonObject = new JSONObject(response);
-        JSONArray seriesJSONArray = getArrayFromJSONObject(jsonObject, SERIES);
-        JSONObject seriesJSONObject = getObjectFromJSONArray(seriesJSONArray, INDEX_ZERO);
-        JSONArray valuesJSONArray = getArrayFromJSONObject(seriesJSONObject, VALUES);
-        switch (extractionStrategy) {
-            case MAX:
-                return getMaxValueFromJsonArray(valuesJSONArray);
-            case AVERAGE:
-                return getAvgValueFromJsonArray(valuesJSONArray);
-            default:
-                return getMaxValueFromJsonArray(valuesJSONArray);
-        }
     }
 }

@@ -1,4 +1,4 @@
-package com.optimizer.model;
+package com.optimizer.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,4 +18,5 @@ public class OptimisedConfig {
     private String pool;
 
     private int optimisedPoolValue;
+
 }

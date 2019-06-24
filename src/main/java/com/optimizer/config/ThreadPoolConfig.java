@@ -1,4 +1,4 @@
-package com.optimizer.threadpool.config;
+package com.optimizer.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +15,8 @@ import javax.ws.rs.DefaultValue;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ThreadPoolConfig {
+
+    private boolean enabled;
 
     private int thresholdMinUsagePercentage = 50;
 

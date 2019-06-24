@@ -1,7 +1,6 @@
 package com.optimizer.util;
 
-import com.optimizer.grafana.config.GrafanaConfig;
-import com.optimizer.threadpool.HystrixThreadPoolService;
+import com.optimizer.config.GrafanaConfig;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -94,7 +93,7 @@ public class OptimizerUtils {
                     maxValue = (int)array.get(INDEX_ONE);
                 } else if(array.get(INDEX_ONE) instanceof Double && ((Double)array.get(INDEX_ONE)).intValue() > maxValue) {
                     maxValue = ((Double)array.get(INDEX_ONE)).longValue();
-                } else if(array.get(INDEX_ONE) instanceof Long && ((Long)array.get(INDEX_ONE)) > maxValue){
+                } else if(array.get(INDEX_ONE) instanceof Long && ((Long)array.get(INDEX_ONE)) > maxValue) {
                     maxValue = (Long)array.get(INDEX_ONE);
                 }
             }

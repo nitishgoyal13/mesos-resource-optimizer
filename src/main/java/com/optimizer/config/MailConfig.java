@@ -1,4 +1,4 @@
-package com.optimizer.mail.config;
+package com.optimizer.config;
 
 import lombok.Builder;
 import lombok.Data;
@@ -34,4 +34,6 @@ public class MailConfig {
     private boolean defaultOwnersEnabled;
 
     private String defaultOwnersEmails;
+
+    private boolean enabledForServiceOwners;
 }

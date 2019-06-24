@@ -1,6 +1,8 @@
-package com.optimizer.grafana.config;
+package com.optimizer.config;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -8,6 +10,8 @@ import java.util.List;
  Created by nitish.goyal on 19/02/19
  ***/
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class GrafanaConfig {
 
     private List<HeaderConfig> headers;
@@ -15,4 +19,6 @@ public class GrafanaConfig {
     private String url;
 
     private String prefix;
+
 }
+

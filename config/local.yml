@@ -14,6 +14,7 @@ grafanaConfig:
   prefix: phonepe.prod
 
 threadPoolConfig:
+  enabled : false
   thresholdMinUsagePercentage: 50
   thresholdMaxUsagePercentage: 70
   queryDurationInHours: 192
@@ -23,18 +24,24 @@ threadPoolConfig:
   extendByThreshold: 50
 
 mesosMonitorConfig:
-  thresholdMinCpuUsagePercentage: 50
-  thresholdMaxCpuUsagePercentage: 70
-  thresholdMinMemoryUsagePercentage: 50
-  thresholdMaxMemoryUsagePercentage: 50
+  enabled : true
   queryDurationInHours: 192
   initialDelayInSeconds: 2
   intervalInSeconds: 86400
-  cpuReduceByThreshold: 50
-  memoryReduceByThreshold: 50
-  cpuExtendByThreshold: 50
-  memoryExtendByThreshold: 50
+  extractionStrategy: MAX
   mesosEndpoint: http://stg-appmesosm101.phonepe.nm2:8080
+  cpuThresholds:
+    enabled: true
+    minResourcePercentage: 50
+    maxResourcePercentage: 70
+    reduceThreshold: 5
+    extendThreshold: 5
+  memoryThresholds:
+    enabled: false
+    minResourcePercentage: 50
+    maxResourcePercentage: 70
+    reduceThreshold: 50
+    extendThreshold: 50
 
 serviceConfigs:
   - service: tstore
@@ -122,16 +129,12 @@ serviceConfigs:
   - service: mercedes-thread-pool
     ownerEmail: mohammed.irfanulla@phonepe.com, nayanava.de@phonepe.com, offers-oncall@phonepe.com
 
-appConfigs:
-  - app: banisher
-    ownerEmail: mudit.g@phonepe.com
-
 mailConfig:
   from: noreply@phonepe.com
   host: stg-smtp001.phonepe.nm2
   port: 25
   defaultOwnersEnabled: true
-  defaultOwnersEmails: nitish.goyal@phonepe.com, mudit.g@phonepe.com, santanu@phonepe.com, phaneesh@phonepe.com
+  defaultOwnersEmails: nitish.goyal@phonepe.com
 
 logging:
   level: INFO

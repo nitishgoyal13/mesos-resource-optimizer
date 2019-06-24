@@ -2,13 +2,12 @@ package com.optimizer.threadpool;
 
 import com.collections.CollectionUtils;
 import com.google.common.collect.Lists;
+import com.optimizer.config.GrafanaConfig;
+import com.optimizer.config.MailConfig;
+import com.optimizer.config.OptimisedConfig;
+import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
-import com.optimizer.grafana.config.GrafanaConfig;
 import com.optimizer.mail.MailSender;
-import com.optimizer.mail.config.MailConfig;
-import com.optimizer.model.OptimisationResponse;
-import com.optimizer.model.OptimisedConfig;
-import com.optimizer.threadpool.config.ThreadPoolConfig;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.http.HttpResponse;
@@ -33,9 +32,9 @@ import static com.optimizer.util.OptimizerUtils.*;
  ***/
 @Builder
 @Data
-public class HystrixThreadPoolHostService implements Runnable {
+public class HystrixThreadPoolHostRunnable implements Runnable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThreadPoolService.class.getSimpleName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(HystrixThreadPoolRunnable.class.getSimpleName());
     private static final String TAGS = "tags";
     private static final String HOST = "host";
 
@@ -48,9 +47,9 @@ public class HystrixThreadPoolHostService implements Runnable {
     private List<String> clusters;
 
     @Builder
-    public HystrixThreadPoolHostService(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig, MailSender mailSender,
-                                        Map<String, String> serviceVsOwnerMap, MailConfig mailConfig, GrafanaConfig grafanaConfig,
-                                        List<String> clusters) {
+    public HystrixThreadPoolHostRunnable(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig, MailSender mailSender,
+                                         Map<String, String> serviceVsOwnerMap, MailConfig mailConfig, GrafanaConfig grafanaConfig,
+                                         List<String> clusters) {
         this.grafanaService = grafanaService;
         this.threadPoolConfig = threadPoolConfig;
         this.mailSender = mailSender;
@@ -78,12 +77,6 @@ public class HystrixThreadPoolHostService implements Runnable {
                 optimisedConfigs.add(optimisedConfig);
             }
         }
-        pushToDb(OptimisationResponse.builder()
-                         .configs(optimisedConfigs)
-                         .build());
-    }
-
-    private void pushToDb(OptimisationResponse optimisationResponse) {
 
     }
 
@@ -96,18 +89,15 @@ public class HystrixThreadPoolHostService implements Runnable {
             optimisedConfig.setPool(hystrixPool);
 
             Map<String, Long> hostVsMaxPool = executePoolQueryByHost(cluster, hystrixPool, MAX_POOL_QUERY_BY_HOST,
-                                                                        ExtractionStrategy.AVERAGE
-                                                                       );
+                                                                     ExtractionStrategy.AVERAGE
+                                                                    );
             Map<String, Long> hostVsPoolUsage = executePoolQueryByHost(cluster, hystrixPool, POOL_USAGE_QUERY_BY_HOST,
-                                                                          ExtractionStrategy.MAX
-                                                                         );
+                                                                       ExtractionStrategy.MAX
+                                                                      );
 
             for(Map.Entry<String, Long> entry : CollectionUtils.nullSafeMap(hostVsMaxPool)
                     .entrySet()) {
                 String host = entry.getKey();
-                if(hostVsPoolUsage.get(host) == null) {
-                    continue;
-                }
                 optimisedConfig.setHost(host);
 
                 long maxPool = hostVsMaxPool.get(host);
@@ -118,30 +108,34 @@ public class HystrixThreadPoolHostService implements Runnable {
                 }
 
                 long usagePercentage = poolUsage * 100 / maxPool;
-                if(usagePercentage < threadPoolConfig.getThresholdMinUsagePercentage()) {
-                    long reduceBy = ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100) - poolUsage;
-                    if(reduceBy > threadPoolConfig.getReduceByThreshold()) {
-                        optimisedConfig.setOptimisedPoolValue((int) (maxPool - reduceBy));
-                        LOGGER.info(String.format("Hystrix Pool: %s Max: %s, Usage: %s, Reduce By: %s ", hystrixPool, maxPool, poolUsage,
-                                                  reduceBy
-                                                 ));
-                    }
-                }
-                if(usagePercentage > threadPoolConfig.getThresholdMaxUsagePercentage()) {
-                    long extendBy = poolUsage - ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100);
-                    if(extendBy > 0) {
-                        optimisedConfig.setOptimisedPoolValue((int) (maxPool + extendBy));
-                        LOGGER.info(String.format("Hystrix Pool: %s Max: %s, Usage: %s, Extend By: %s ", hystrixPool, maxPool, poolUsage,
-                                                  extendBy
-                                                 ));
-                    }
-                }
+                reducePool(optimisedConfig, hystrixPool, maxPool, poolUsage, usagePercentage);
+                extendPool(optimisedConfig, hystrixPool, maxPool, poolUsage, usagePercentage);
+            }
+        }
+    }
+
+    private void extendPool(OptimisedConfig optimisedConfig, String hystrixPool, long maxPool, long poolUsage, long usagePercentage) {
+        if(usagePercentage > threadPoolConfig.getThresholdMaxUsagePercentage()) {
+            long extendBy = poolUsage - ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100);
+            if(extendBy > 0) {
+                optimisedConfig.setOptimisedPoolValue((int)(maxPool + extendBy));
+                LOGGER.info("Hystrix Pool: {} Max:{}, Usage: {}, Extend By: {} ", hystrixPool, maxPool, poolUsage, extendBy);
+            }
+        }
+    }
+
+    private void reducePool(OptimisedConfig optimisedConfig, String hystrixPool, long maxPool, long poolUsage, long usagePercentage) {
+        if(usagePercentage < threadPoolConfig.getThresholdMinUsagePercentage()) {
+            long reduceBy = ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100) - poolUsage;
+            if(reduceBy > threadPoolConfig.getReduceByThreshold()) {
+                optimisedConfig.setOptimisedPoolValue((int)(maxPool - reduceBy));
+                LOGGER.info("Hystrix Pool: {} Max: {}, Usage: {}, Reduce By: {}", hystrixPool, maxPool, poolUsage, reduceBy);
             }
         }
     }
 
     private Map<String, Long> executePoolQueryByHost(String cluster, String hystrixPool, String query,
-                                                        ExtractionStrategy extractionStrategy) {
+                                                     ExtractionStrategy extractionStrategy) {
 
         try {
             String poolQuery = String.format(query, grafanaConfig.getPrefix(), cluster, hystrixPool,
@@ -162,8 +156,8 @@ public class HystrixThreadPoolHostService implements Runnable {
         int status = httpResponse.getStatusLine()
                 .getStatusCode();
         if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
-            LOGGER.error("Error in Http get, Status Code: " + httpResponse.getStatusLine()
-                    .getStatusCode() + " received Response: " + httpResponse);
+            LOGGER.error("Error in Http get, Status Code: {} with response {}", httpResponse.getStatusLine()
+                    .getStatusCode(), httpResponse);
             return Collections.emptyMap();
         }
         String data = EntityUtils.toString(httpResponse.getEntity());

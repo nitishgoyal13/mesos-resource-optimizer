@@ -1,6 +1,6 @@
 package com.optimizer.mail;
 
-import com.optimizer.mail.config.MailConfig;
+import com.optimizer.config.MailConfig;
 import io.dropwizard.lifecycle.Managed;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -14,7 +14,10 @@ import java.util.Properties;
  Created by mudit.g on Mar, 2019
  ***/
 public class MailSender implements Managed {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(MailSender.class);
+    private static final int TIMEOUT_IN_MS = 20000;
+
     @Getter
     private MailConfig mailConfig;
     private Session mailSession;
@@ -27,8 +30,8 @@ public class MailSender implements Managed {
         mailProps.put("mail.smtp.auth", false);
         mailProps.put("mail.smtp.host", mailConfig.getHost());
         mailProps.put("mail.smtp.startttls.enable", false);
-        mailProps.put("mail.smtp.timeout", 20000);
-        mailProps.put("mail.smtp.connectiontimeout", 20000);
+        mailProps.put("mail.smtp.timeout", TIMEOUT_IN_MS);
+        mailProps.put("mail.smtp.connectiontimeout", TIMEOUT_IN_MS);
         this.mailSession = Session.getDefaultInstance(mailProps);
     }
 
@@ -51,7 +54,7 @@ public class MailSender implements Managed {
             Transport.send(message, mailConfig.getUser(), mailConfig.getPassword());
             LOGGER.info("Mail Sent");
         } catch (Exception e) {
-            LOGGER.error("Error sending mail", e);
+            LOGGER.error("Error sending mail : ", e);
         }
     }
 
@@ -63,8 +66,8 @@ public class MailSender implements Managed {
         mailProps.put("mail.smtp.auth", false);
         mailProps.put("mail.smtp.host", mailConfig.getHost());
         mailProps.put("mail.smtp.startttls.enable", false);
-        mailProps.put("mail.smtp.timeout", 10000);
-        mailProps.put("mail.smtp.connectiontimeout", 10000);
+        mailProps.put("mail.smtp.timeout", TIMEOUT_IN_MS);
+        mailProps.put("mail.smtp.connectiontimeout", TIMEOUT_IN_MS);
         mailSession = Session.getDefaultInstance(mailProps);
     }
 
