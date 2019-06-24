@@ -234,7 +234,7 @@
                         <artifactId>docker-maven-plugin</artifactId>
                         <version>0.4.0</version>
                         <configuration>
-                            <imageName>docker.phonepe.com:5000/optimizer:${project.version}</imageName>
+                            <imageName>docker.local.com:5000/optimizer:${project.version}</imageName>
                             <dockerDirectory>${project.basedir}/</dockerDirectory>
                             <registryUrl>http://docker.local.com:5000/</registryUrl>
                         </configuration>
