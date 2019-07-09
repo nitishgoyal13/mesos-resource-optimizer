@@ -1,9 +1,35 @@
 package com.optimizer.grafana;
 
+import static com.optimizer.grafana.GrafanaQueryUtils.APP_LIST_PATTERN;
+import static com.optimizer.grafana.GrafanaQueryUtils.APP_LIST_QUERY;
+import static com.optimizer.grafana.GrafanaQueryUtils.POOL_LIST_PATTERN;
+import static com.optimizer.grafana.GrafanaQueryUtils.POOL_LIST_QUERY;
+import static com.optimizer.util.OptimizerUtils.ExtractionStrategy;
+import static com.optimizer.util.OptimizerUtils.INDEX_ONE;
+import static com.optimizer.util.OptimizerUtils.INDEX_ZERO;
+import static com.optimizer.util.OptimizerUtils.QUERY;
+import static com.optimizer.util.OptimizerUtils.RESULTS;
+import static com.optimizer.util.OptimizerUtils.SERIES;
+import static com.optimizer.util.OptimizerUtils.STATUS_OK_RANGE_END;
+import static com.optimizer.util.OptimizerUtils.STATUS_OK_RANGE_START;
+import static com.optimizer.util.OptimizerUtils.VALUES;
+import static com.optimizer.util.OptimizerUtils.getArrayFromJSONObject;
+import static com.optimizer.util.OptimizerUtils.getAvgValueFromJsonArray;
+import static com.optimizer.util.OptimizerUtils.getHttpResponse;
+import static com.optimizer.util.OptimizerUtils.getMaxValueFromJsonArray;
+import static com.optimizer.util.OptimizerUtils.getObjectFromJSONArray;
+
 import com.collections.CollectionUtils;
 import com.google.common.collect.Lists;
 import com.optimizer.config.GrafanaConfig;
 import com.optimizer.util.OptimizerUtils;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,13 +40,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.optimizer.grafana.GrafanaQueryUtils.*;
-import static com.optimizer.util.OptimizerUtils.*;
 
 /***
  Created by mudit.g on Feb, 2019
@@ -149,7 +168,7 @@ public class GrafanaService {
     }
 
     public Map<String, Long> executeQueriesAndGetMapWithEntity(List<String> queries, List<String> entities,
-                                                               ExtractionStrategy extractionStrategy) throws Exception {
+            ExtractionStrategy extractionStrategy) throws Exception {
         Map<String, Long> entityVsResult = new HashMap<>();
         int index = 0;
         for (List<String> queryChunk : Lists.partition(queries, PARTITION_SIZE)) {
@@ -162,8 +181,9 @@ public class GrafanaService {
                     int status = httpResponse.getStatusLine()
                             .getStatusCode();
                     if (status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
-                        LOGGER.error("Error in Http get, Status Code: {} with received Response: {}", httpResponse.getStatusLine()
-                                .getStatusCode(), httpResponse);
+                        LOGGER.error("Error in Http get, Status Code: {} with received Response: {}",
+                                httpResponse.getStatusLine()
+                                        .getStatusCode(), httpResponse);
                         return Collections.emptyMap();
                     }
                     String data = EntityUtils.toString(httpResponse.getEntity());

@@ -2,11 +2,10 @@ package com.optimizer.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.optimizer.util.OptimizerUtils;
+import javax.ws.rs.DefaultValue;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-
-import javax.ws.rs.DefaultValue;
 
 /***
  Created by mudit.g on Mar, 2019
@@ -16,7 +15,7 @@ import javax.ws.rs.DefaultValue;
 @Builder
 public class MesosMonitorConfig {
 
-    private boolean enabled;
+    private boolean enabled = true;
 
     private String mesosEndpoint;
 

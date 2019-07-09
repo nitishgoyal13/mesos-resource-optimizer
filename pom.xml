@@ -7,7 +7,7 @@
     <groupId>com.optimizer</groupId>
     <artifactId>optimizer</artifactId>
     <packaging>jar</packaging>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1-0</version>
 
     <name>Optimizer</name>
     <description>
@@ -201,6 +201,11 @@
             <groupId>com.aerospike</groupId>
             <artifactId>aerospike-client</artifactId>
             <version>${aerospike.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.phonepe.platform</groupId>
+            <artifactId>rosey-dropwizard-config</artifactId>
+            <version>1.6</version>
         </dependency>
     </dependencies>
 

@@ -1,5 +1,17 @@
 package com.optimizer.threadpool;
 
+import static com.optimizer.threadpool.ThreadPoolQueryUtils.MAX_POOL_QUERY_BY_HOST;
+import static com.optimizer.threadpool.ThreadPoolQueryUtils.POOL_USAGE_QUERY_BY_HOST;
+import static com.optimizer.threadpool.ThreadPoolUtils.getValueFromGrafanaResponseByHost;
+import static com.optimizer.util.OptimizerUtils.ExtractionStrategy;
+import static com.optimizer.util.OptimizerUtils.INDEX_ZERO;
+import static com.optimizer.util.OptimizerUtils.RESULTS;
+import static com.optimizer.util.OptimizerUtils.SERIES;
+import static com.optimizer.util.OptimizerUtils.STATUS_OK_RANGE_END;
+import static com.optimizer.util.OptimizerUtils.STATUS_OK_RANGE_START;
+import static com.optimizer.util.OptimizerUtils.getArrayFromJSONObject;
+import static com.optimizer.util.OptimizerUtils.getObjectFromJSONArray;
+
 import com.collections.CollectionUtils;
 import com.google.common.collect.Lists;
 import com.optimizer.config.GrafanaConfig;
@@ -8,6 +20,10 @@ import com.optimizer.config.OptimisedConfig;
 import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.mail.MailSender;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.http.HttpResponse;
@@ -16,16 +32,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.optimizer.threadpool.ThreadPoolQueryUtils.MAX_POOL_QUERY_BY_HOST;
-import static com.optimizer.threadpool.ThreadPoolQueryUtils.POOL_USAGE_QUERY_BY_HOST;
-import static com.optimizer.threadpool.ThreadPoolUtils.getValueFromGrafanaResponseByHost;
-import static com.optimizer.util.OptimizerUtils.*;
 
 /***
  Created by nitish.goyal on 28/03/19
@@ -47,9 +53,10 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
     private List<String> clusters;
 
     @Builder
-    public HystrixThreadPoolHostRunnable(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig, MailSender mailSender,
-                                         Map<String, String> serviceVsOwnerMap, MailConfig mailConfig, GrafanaConfig grafanaConfig,
-                                         List<String> clusters) {
+    public HystrixThreadPoolHostRunnable(GrafanaService grafanaService, ThreadPoolConfig threadPoolConfig,
+            MailSender mailSender,
+            Map<String, String> serviceVsOwnerMap, MailConfig mailConfig, GrafanaConfig grafanaConfig,
+            List<String> clusters) {
         this.grafanaService = grafanaService;
         this.threadPoolConfig = threadPoolConfig;
         this.mailSender = mailSender;
@@ -63,7 +70,8 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
     public void run() {
         List<OptimisedConfig> optimisedConfigs = Lists.newArrayList();
         for (String cluster : CollectionUtils.nullSafeList(clusters)) {
-            Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(grafanaConfig.getPrefix(), cluster);
+            Map<String, List<String>> serviceVsPoolList = grafanaService
+                    .getServiceVsPoolList(grafanaConfig.getPrefix(), cluster);
             if (CollectionUtils.isEmpty(serviceVsPoolList)) {
                 LOGGER.error("Error in getting serviceVsPoolList. Got empty map");
                 continue;
@@ -80,8 +88,9 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
 
     }
 
-    private void handleHystrixPoolByHost(String cluster, String serviceName, Map<String, List<String>> serviceVsPoolList,
-                                         OptimisedConfig optimisedConfig) {
+    private void handleHystrixPoolByHost(String cluster, String serviceName,
+            Map<String, List<String>> serviceVsPoolList,
+            OptimisedConfig optimisedConfig) {
         List<String> hystrixPools = serviceVsPoolList.get(serviceName);
 
         for (String hystrixPool : CollectionUtils.nullSafeList(hystrixPools)) {
@@ -114,28 +123,32 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
         }
     }
 
-    private void extendPool(OptimisedConfig optimisedConfig, String hystrixPool, long maxPool, long poolUsage, long usagePercentage) {
+    private void extendPool(OptimisedConfig optimisedConfig, String hystrixPool, long maxPool, long poolUsage,
+            long usagePercentage) {
         if (usagePercentage > threadPoolConfig.getThresholdMaxUsagePercentage()) {
             long extendBy = poolUsage - ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100);
             if (extendBy > 0) {
                 optimisedConfig.setOptimisedPoolValue((int) (maxPool + extendBy));
-                LOGGER.info("Hystrix Pool: {} Max:{}, Usage: {}, Extend By: {} ", hystrixPool, maxPool, poolUsage, extendBy);
+                LOGGER.info("Hystrix Pool: {} Max:{}, Usage: {}, Extend By: {} ", hystrixPool, maxPool, poolUsage,
+                        extendBy);
             }
         }
     }
 
-    private void reducePool(OptimisedConfig optimisedConfig, String hystrixPool, long maxPool, long poolUsage, long usagePercentage) {
+    private void reducePool(OptimisedConfig optimisedConfig, String hystrixPool, long maxPool, long poolUsage,
+            long usagePercentage) {
         if (usagePercentage < threadPoolConfig.getThresholdMinUsagePercentage()) {
             long reduceBy = ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100) - poolUsage;
             if (reduceBy > threadPoolConfig.getReduceByThreshold()) {
                 optimisedConfig.setOptimisedPoolValue((int) (maxPool - reduceBy));
-                LOGGER.info("Hystrix Pool: {} Max: {}, Usage: {}, Reduce By: {}", hystrixPool, maxPool, poolUsage, reduceBy);
+                LOGGER.info("Hystrix Pool: {} Max: {}, Usage: {}, Reduce By: {}", hystrixPool, maxPool, poolUsage,
+                        reduceBy);
             }
         }
     }
 
     private Map<String, Long> executePoolQueryByHost(String cluster, String hystrixPool, String query,
-                                                     ExtractionStrategy extractionStrategy) {
+            ExtractionStrategy extractionStrategy) {
 
         try {
             String poolQuery = String.format(query, grafanaConfig.getPrefix(), cluster, hystrixPool,
@@ -148,7 +161,8 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
         }
     }
 
-    private Map<String, Long> executeGrafanaQueriesByHost(String query, ExtractionStrategy extractionStrategy) throws Exception {
+    private Map<String, Long> executeGrafanaQueriesByHost(String query, ExtractionStrategy extractionStrategy)
+            throws Exception {
         Map<String, Long> hostVsResult = new HashMap<>();
 
         HttpResponse httpResponse = grafanaService.execute(query);

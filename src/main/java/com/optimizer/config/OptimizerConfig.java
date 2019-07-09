@@ -2,11 +2,11 @@ package com.optimizer.config;
 
 import io.dropwizard.Configuration;
 import io.dropwizard.riemann.RiemannConfig;
+import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.List;
 
 /***
  Created by nitish.goyal on 19/02/19
@@ -14,6 +14,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
+@Builder
 public class OptimizerConfig extends Configuration {
 
     private RiemannConfig riemann;

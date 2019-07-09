@@ -1,11 +1,10 @@
 package com.optimizer.config;
 
+import javax.ws.rs.DefaultValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.ws.rs.DefaultValue;
 
 /***
  Created by mudit.g on Feb, 2019

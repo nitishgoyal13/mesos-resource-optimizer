@@ -1,7 +1,6 @@
 package com.optimizer.resources;
 
 import com.optimizer.threadpool.HystrixThreadPoolRunnable;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 

@@ -1,6 +1,11 @@
 package com.optimizer;
 
-import com.optimizer.config.*;
+import com.optimizer.config.GrafanaConfig;
+import com.optimizer.config.MailConfig;
+import com.optimizer.config.MesosMonitorConfig;
+import com.optimizer.config.OptimizerConfig;
+import com.optimizer.config.ServiceConfig;
+import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.http.HttpClientFactory;
 import com.optimizer.mail.MailSender;
@@ -8,10 +13,12 @@ import com.optimizer.mesosmonitor.MesosMonitorRunnable;
 import com.optimizer.resources.OptimizerResource;
 import com.optimizer.threadpool.HystrixThreadPoolHostRunnable;
 import com.optimizer.threadpool.HystrixThreadPoolRunnable;
+import com.phonepe.rosey.dwconfig.RoseyConfigSourceProvider;
 import io.dropwizard.Application;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +33,16 @@ public class OptimizerServer extends Application<OptimizerConfig> {
 
     @Override
     public void initialize(Bootstrap<OptimizerConfig> bootstrap) {
-        //Do Nothing. Will add later
+        boolean localConfig = Boolean.parseBoolean(System.getProperty("localConfig", "false"));
+        if (localConfig) {
+            bootstrap.setConfigurationSourceProvider(
+                    new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
+                            new EnvironmentVariableSubstitutor()));
+        } else {
+            bootstrap.setConfigurationSourceProvider(
+                    new SubstitutingSourceProvider(new RoseyConfigSourceProvider("platform", "optimizer"),
+                            new EnvironmentVariableSubstitutor()));
+        }
     }
 
     @Override
@@ -72,26 +88,27 @@ public class OptimizerServer extends Application<OptimizerConfig> {
 
         optimizeThreadPools(grafanaService, mailSender, serviceVsOwnerEmail, configuration, scheduledExecutorService);
 
-
-        optimizeMesosResources(configuration, mailSender, grafanaService, serviceVsOwnerEmail, scheduledExecutorService);
+        optimizeMesosResources(configuration, mailSender, grafanaService, serviceVsOwnerEmail,
+                scheduledExecutorService);
 
         environment.lifecycle()
                 .manage(mailSender);
 
         if (configuration.getThreadPoolConfig()
                 .isEnabled()) {
-            scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolRunnable, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
-                    hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-            );
+            scheduledExecutorService
+                    .scheduleAtFixedRate(hystrixThreadPoolRunnable, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
+                            hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+                    );
         }
-
 
         environment.jersey()
                 .register(new OptimizerResource(hystrixThreadPoolRunnable));
     }
 
-    private void optimizeMesosResources(OptimizerConfig optimizerConfig, MailSender mailSender, GrafanaService grafanaService,
-                                        Map<String, String> serviceVsOwnerEmail, ScheduledExecutorService scheduledExecutorService) {
+    private void optimizeMesosResources(OptimizerConfig optimizerConfig, MailSender mailSender,
+            GrafanaService grafanaService,
+            Map<String, String> serviceVsOwnerEmail, ScheduledExecutorService scheduledExecutorService) {
         MesosMonitorConfig mesosMonitorConfig = optimizerConfig.getMesosMonitorConfig();
         if (!mesosMonitorConfig.isEnabled()) {
             return;
@@ -105,13 +122,15 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .grafanaConfig(optimizerConfig.getGrafanaConfig())
                 .build();
 
-        scheduledExecutorService.scheduleAtFixedRate(mesosMonitorRunnable, mesosMonitorConfig.getInitialDelayInSeconds(),
-                mesosMonitorConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-        );
+        scheduledExecutorService
+                .scheduleAtFixedRate(mesosMonitorRunnable, mesosMonitorConfig.getInitialDelayInSeconds(),
+                        mesosMonitorConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+                );
     }
 
-    private void optimizeThreadPools(GrafanaService grafanaService, MailSender mailSender, Map<String, String> serviceVsOwnerEmail,
-                                     OptimizerConfig configuration, ScheduledExecutorService scheduledExecutorService) {
+    private void optimizeThreadPools(GrafanaService grafanaService, MailSender mailSender,
+            Map<String, String> serviceVsOwnerEmail,
+            OptimizerConfig configuration, ScheduledExecutorService scheduledExecutorService) {
 
         if (!configuration.getThreadPoolConfig()
                 .isEnabled()) {
@@ -128,22 +147,25 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .clusters(configuration.getClusters())
                 .build();
 
-        scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolHostRunnable, threadPoolConfig.getInitialDelayInSeconds(),
-                threadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-        );
+        scheduledExecutorService
+                .scheduleAtFixedRate(hystrixThreadPoolHostRunnable, threadPoolConfig.getInitialDelayInSeconds(),
+                        threadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+                );
 
 
     }
 
     private Map<String, String> createServiceVsOwnerMap(List<ServiceConfig> serviceConfigs) {
         Map<String, String> serviceVsOwnerMap = new HashMap<>();
-        serviceConfigs.forEach(serviceConfig -> serviceVsOwnerMap.put(serviceConfig.getService(), serviceConfig.getOwnerEmail()));
+        serviceConfigs.forEach(
+                serviceConfig -> serviceVsOwnerMap.put(serviceConfig.getService(), serviceConfig.getOwnerEmail()));
         return serviceVsOwnerMap;
     }
 
     private Map<String, String> createAppVsOwnerMap(List<ServiceConfig> serviceConfigs) {
         Map<String, String> appVsOwnerMap = new HashMap<>();
-        serviceConfigs.forEach(serviceConfig -> appVsOwnerMap.put(serviceConfig.getService(), serviceConfig.getOwnerEmail()));
+        serviceConfigs
+                .forEach(serviceConfig -> appVsOwnerMap.put(serviceConfig.getService(), serviceConfig.getOwnerEmail()));
         return appVsOwnerMap;
     }
 

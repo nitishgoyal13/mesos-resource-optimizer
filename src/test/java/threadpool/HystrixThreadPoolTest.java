@@ -5,7 +5,6 @@ package threadpool;
  ***/
 public class HystrixThreadPoolTest {
 
-
     //TODO Add test cases
 
 }

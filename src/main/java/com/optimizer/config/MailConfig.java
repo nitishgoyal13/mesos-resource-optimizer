@@ -1,10 +1,9 @@
 package com.optimizer.config;
 
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotEmpty;
-
-import javax.validation.constraints.NotNull;
 
 /***
  Created by mudit.g on Mar, 2019
@@ -12,6 +11,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @Builder
 public class MailConfig {
+
     @NotNull
     @NotEmpty
     private String host;

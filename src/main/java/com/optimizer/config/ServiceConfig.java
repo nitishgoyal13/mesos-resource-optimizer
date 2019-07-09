@@ -1,9 +1,8 @@
 package com.optimizer.config;
 
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
-
-import javax.validation.constraints.NotNull;
 
 /***
  Created by nitish.goyal on 19/02/19

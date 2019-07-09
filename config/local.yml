@@ -88,7 +88,7 @@ serviceConfigs:
     ownerEmail: tushar.naik@phonepe.com
   - service: oculusProxyServices
     ownerEmail: sudhir.singh@phonepe.com
-  - service: plutus-events-ing	estion
+  - service: plutus-events-ingestion
     ownerEmail: accounting@phonepe.com
   - service: nexus_promise
     ownerEmail: sarang.shravagi@phonepe.com, santosh.patil@phonepe.com
@@ -128,6 +128,10 @@ serviceConfigs:
     ownerEmail: sarang.shravagi@phonepe.com, santosh.patil@phonepe.com
   - service: mercedes-thread-pool
     ownerEmail: mohammed.irfanulla@phonepe.com, nayanava.de@phonepe.com, offers-oncall@phonepe.com
+  - service: accounting_plutus-bank-statement-processor
+    ownerEmail: accounting@phonepe.com
+  - service: accounting_plutus-api-recon
+    ownerEmail: accounting@phonepe.com
 
 mailConfig:
   from: noreply@phonepe.com

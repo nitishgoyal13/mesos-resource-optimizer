@@ -1,9 +1,16 @@
 package com.optimizer.threadpool;
 
+import static com.optimizer.util.OptimizerUtils.ExtractionStrategy;
+import static com.optimizer.util.OptimizerUtils.INDEX_ZERO;
+import static com.optimizer.util.OptimizerUtils.SERIES;
+import static com.optimizer.util.OptimizerUtils.VALUES;
+import static com.optimizer.util.OptimizerUtils.getArrayFromJSONObject;
+import static com.optimizer.util.OptimizerUtils.getAvgValueFromJsonArray;
+import static com.optimizer.util.OptimizerUtils.getMaxValueFromJsonArray;
+import static com.optimizer.util.OptimizerUtils.getObjectFromJSONArray;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import static com.optimizer.util.OptimizerUtils.*;
 
 /***
  Created by nitish.goyal on 28/03/19

@@ -1,5 +1,13 @@
 package com.optimizer.mesosmonitor;
 
+import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.APP_QUERY;
+import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.TOTAL_CPU;
+import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.TOTAL_MEMORY;
+import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.USED_CPU;
+import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.USED_MEMORY;
+import static com.optimizer.util.OptimizerUtils.ExtractionStrategy;
+import static com.optimizer.util.OptimizerUtils.MAIL_SUBJECT;
+
 import com.collections.CollectionUtils;
 import com.google.common.collect.Lists;
 import com.optimizer.config.GrafanaConfig;
@@ -10,18 +18,13 @@ import com.optimizer.grafana.GrafanaService;
 import com.optimizer.mail.MailSender;
 import com.optimizer.response.AppOptimizationResource;
 import com.optimizer.response.MesosOptimizationResponse;
-import lombok.Builder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.*;
-import static com.optimizer.util.OptimizerUtils.ExtractionStrategy;
-import static com.optimizer.util.OptimizerUtils.MAIL_SUBJECT;
+import lombok.Builder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /***
  Created by nitish.goyal on June, 2019
@@ -39,8 +42,9 @@ public class MesosMonitorRunnable implements Runnable {
     private GrafanaConfig grafanaConfig;
 
     @Builder
-    public MesosMonitorRunnable(GrafanaService grafanaService, MesosMonitorConfig mesosMonitorConfig, MailSender mailSender,
-                                MailConfig mailConfig, Map<String, String> appVsOwnerMap, GrafanaConfig grafanaConfig) {
+    public MesosMonitorRunnable(GrafanaService grafanaService, MesosMonitorConfig mesosMonitorConfig,
+            MailSender mailSender,
+            MailConfig mailConfig, Map<String, String> appVsOwnerMap, GrafanaConfig grafanaConfig) {
         this.grafanaService = grafanaService;
         this.mesosMonitorConfig = mesosMonitorConfig;
         this.mailSender = mailSender;
@@ -60,14 +64,16 @@ public class MesosMonitorRunnable implements Runnable {
             return;
         }
         handleMesosResources(apps, mesosOptimizationResponse);
-        mailSender.send("Optimize Mesos Resources", getMailBody(mesosOptimizationResponse), mailConfig.getDefaultOwnersEmails());
+        mailSender.send("Optimize Mesos Resources", getMailBody(mesosOptimizationResponse),
+                mailConfig.getDefaultOwnersEmails());
     }
 
     private void handleMesosResources(List<String> apps, MesosOptimizationResponse mesosOptimizationResponse) {
         List<List<String>> appsLists = CollectionUtils.partition(apps, SUB_LIST_SIZE);
         for (List<String> appsSubList : appsLists) {
 
-            optimizeResourceUsage(appsSubList, TOTAL_CPU, USED_CPU, mesosMonitorConfig.getCpuThresholds(), ResourcesOptimized.CPU,
+            optimizeResourceUsage(appsSubList, TOTAL_CPU, USED_CPU, mesosMonitorConfig.getCpuThresholds(),
+                    ResourcesOptimized.CPU,
                     mesosOptimizationResponse
             );
 
@@ -78,8 +84,9 @@ public class MesosMonitorRunnable implements Runnable {
         }
     }
 
-    private void optimizeResourceUsage(List<String> appsSubList, String totalResource, String usedResource, ThresholdParams thresholdParams,
-                                       ResourcesOptimized resourcesOptimized, MesosOptimizationResponse mesosOptimizationResponse) {
+    private void optimizeResourceUsage(List<String> appsSubList, String totalResource, String usedResource,
+            ThresholdParams thresholdParams,
+            ResourcesOptimized resourcesOptimized, MesosOptimizationResponse mesosOptimizationResponse) {
 
         if (!thresholdParams.isEnabled()) {
             return;
@@ -107,11 +114,11 @@ public class MesosMonitorRunnable implements Runnable {
             if (totalRes > 0 && usedRes > 0) {
                 long usagePercentage = usedRes * 100 / totalRes;
                 if (usagePercentage < thresholdParams.getMinResourcePercentage()) {
-                    reduceResourceUsage(app, totalRes, usedRes, ownerEmail, thresholdParams, resourcesOptimized, mesosOptimizationResponse);
+                    reduceResourceUsage(app, totalRes, usedRes, ownerEmail, thresholdParams, resourcesOptimized,
+                            mesosOptimizationResponse);
                 } else if (usagePercentage > thresholdParams.getMaxResourcePercentage()) {
                     increaseResourceUsage(app, totalRes, usedRes, ownerEmail, thresholdParams, resourcesOptimized,
-                            mesosOptimizationResponse
-                    );
+                            mesosOptimizationResponse);
                 }
             }
 
@@ -119,8 +126,9 @@ public class MesosMonitorRunnable implements Runnable {
 
     }
 
-    private void increaseResourceUsage(String app, long totalRes, long usedRes, String ownerEmail, ThresholdParams thresholdParams,
-                                       ResourcesOptimized resourcesOptimized, MesosOptimizationResponse mesosOptimizationResponse) {
+    private void increaseResourceUsage(String app, long totalRes, long usedRes, String ownerEmail,
+            ThresholdParams thresholdParams,
+            ResourcesOptimized resourcesOptimized, MesosOptimizationResponse mesosOptimizationResponse) {
 
         long extendBy = usedRes - ((totalRes * thresholdParams.getMinResourcePercentage()) / 100);
         if (extendBy > thresholdParams.getExtendThreshold()) {
@@ -135,15 +143,17 @@ public class MesosMonitorRunnable implements Runnable {
             mesosOptimizationResponse.getAppsOptimizedList()
                     .add(appOptimizationResource);
             mailSender.send(MAIL_SUBJECT,
-                    getExtendByMailBody(app, totalRes, usedRes, extendBy, ownerEmail, thresholdParams.getMinResourcePercentage(),
+                    getExtendByMailBody(app, totalRes, usedRes, extendBy, ownerEmail,
+                            thresholdParams.getMinResourcePercentage(),
                             resourcesOptimized.name()
                     ), ownerEmail
             );
         }
     }
 
-    private void reduceResourceUsage(String app, long totalRes, long usedRes, String ownerEmail, ThresholdParams thresholdParams,
-                                     ResourcesOptimized resourcesOptimized, MesosOptimizationResponse mesosOptimizationResponse) {
+    private void reduceResourceUsage(String app, long totalRes, long usedRes, String ownerEmail,
+            ThresholdParams thresholdParams,
+            ResourcesOptimized resourcesOptimized, MesosOptimizationResponse mesosOptimizationResponse) {
 
         long reduceBy = ((totalRes * thresholdParams.getMinResourcePercentage()) / 100) - usedRes;
         if (reduceBy > thresholdParams.getReduceThreshold()) {
@@ -158,14 +168,15 @@ public class MesosMonitorRunnable implements Runnable {
                     .add(appOptimizationResource);
             LOGGER.info("App: {} Total Resource: {} Used Resource: {} Reduce: {}", app, totalRes, usedRes, reduceBy);
             mailSender.send(MAIL_SUBJECT,
-                    getReduceByMailBody(app, totalRes, usedRes, reduceBy, ownerEmail, thresholdParams.getMinResourcePercentage(),
-                            resourcesOptimized.name()
-                    ), ownerEmail
+                    getReduceByMailBody(app, totalRes, usedRes, reduceBy, ownerEmail,
+                            thresholdParams.getMinResourcePercentage(),
+                            resourcesOptimized.name()), ownerEmail
             );
         }
     }
 
-    private Map<String, Long> executeMesosMonitorQuery(List<String> apps, String metricName, ExtractionStrategy extractionStrategy) {
+    private Map<String, Long> executeMesosMonitorQuery(List<String> apps, String metricName,
+            ExtractionStrategy extractionStrategy) {
         List<String> queries = new ArrayList<>();
         for (String app : CollectionUtils.nullAndEmptySafeValueList(apps)) {
             String resourceQuery = String.format(APP_QUERY, grafanaConfig.getPrefix(), app, metricName,
@@ -187,26 +198,32 @@ public class MesosMonitorRunnable implements Runnable {
         return responses;
     }
 
-    private String getReduceByMailBody(String app, long totalResource, long usedResource, long reduceBy, String ownerEmail,
-                                       int threshodMinUsagePercentage, String entityToBeOptimized) {
-        return String.format("Hi, %s <br> App %s can be optimized. %s usage is consistently below %s%% in last 8 days. " +
-                        " <br>App: %s  <br> Total %s: %s <br> Used %s: %s <br> Can be reduced by: %s " +
-                        " <br> Kindly reach out to Nitish for any queries. If you aren't " +
-                        "the service owner for the mail received, kindly help me out figuring the service owner", ownerEmail,
-                entityToBeOptimized, entityToBeOptimized, Integer.toString(threshodMinUsagePercentage), app,
-                entityToBeOptimized, totalResource, entityToBeOptimized, usedResource, reduceBy
-        );
+    private String getReduceByMailBody(String app, long totalResource, long usedResource, long reduceBy,
+            String ownerEmail,
+            int threshodMinUsagePercentage, String entityToBeOptimized) {
+        return String
+                .format("Hi, %s <br> App %s can be optimized. %s usage is consistently below %s%% in last 8 days. " +
+                                " <br>App: %s  <br> Total %s: %s <br> Used %s: %s <br> Can be reduced by: %s " +
+                                " <br> Kindly reach out to Nitish for any queries. If you aren't " +
+                                "the service owner for the mail received, kindly help me out figuring the service owner",
+                        ownerEmail,
+                        entityToBeOptimized, entityToBeOptimized, Integer.toString(threshodMinUsagePercentage), app,
+                        entityToBeOptimized, totalResource, entityToBeOptimized, usedResource, reduceBy
+                );
     }
 
-    private String getExtendByMailBody(String app, long totalResource, long usedResource, long reduceBy, String ownerEmail,
-                                       int threshodMaxUsagePercentage, String entityToBeOptimized) {
-        return String.format("Hi, %s <br> App %s can be optimized. %s usage is consistently above %s%% in last 8 days. " +
-                        " <br>App: %s  <br> Total %s: %s <br> Used %s: %s <br> Can be extended by: %s " +
-                        " <br> Kindly reach out to Nitish for any queries. If you aren't " +
-                        "the service owner for the mail received, kindly help me out figuring the service owner", ownerEmail,
-                entityToBeOptimized, entityToBeOptimized, Integer.toString(threshodMaxUsagePercentage), app,
-                entityToBeOptimized, totalResource, entityToBeOptimized, usedResource, reduceBy
-        );
+    private String getExtendByMailBody(String app, long totalResource, long usedResource, long reduceBy,
+            String ownerEmail,
+            int threshodMaxUsagePercentage, String entityToBeOptimized) {
+        return String
+                .format("Hi, %s <br> App %s can be optimized. %s usage is consistently above %s%% in last 8 days. " +
+                                " <br>App: %s  <br> Total %s: %s <br> Used %s: %s <br> Can be extended by: %s " +
+                                " <br> Kindly reach out to Nitish for any queries. If you aren't " +
+                                "the service owner for the mail received, kindly help me out figuring the service owner",
+                        ownerEmail,
+                        entityToBeOptimized, entityToBeOptimized, Integer.toString(threshodMaxUsagePercentage), app,
+                        entityToBeOptimized, totalResource, entityToBeOptimized, usedResource, reduceBy
+                );
     }
 
     private String getMailBody(MesosOptimizationResponse mesosOptimizationResponse) {

@@ -2,13 +2,20 @@ package com.optimizer.mail;
 
 import com.optimizer.config.MailConfig;
 import io.dropwizard.lifecycle.Managed;
+import java.util.Properties;
+import javax.mail.BodyPart;
+import javax.mail.Message;
+import javax.mail.Multipart;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.InternetHeaders;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.mail.*;
-import javax.mail.internet.*;
-import java.util.Properties;
 
 /***
  Created by mudit.g on Mar, 2019

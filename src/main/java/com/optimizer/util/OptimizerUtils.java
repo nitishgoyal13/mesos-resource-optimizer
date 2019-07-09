@@ -1,6 +1,9 @@
 package com.optimizer.util;
 
 import com.optimizer.config.GrafanaConfig;
+import com.optimizer.config.MesosMonitorConfig;
+import com.optimizer.config.OptimizerConfig;
+import java.net.URLEncoder;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -8,8 +11,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URLEncoder;
 
 /***
  Created by nitish.goyal on 18/02/19
@@ -29,7 +30,8 @@ public class OptimizerUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(OptimizerUtils.class);
     private static final String ENCODING = "UTF-8";
 
-    private static HttpResponse executeGetRequest(HttpClient client, String query, GrafanaConfig grafanaConfig) throws Exception {
+    private static HttpResponse executeGetRequest(HttpClient client, String query, GrafanaConfig grafanaConfig)
+            throws Exception {
         String encodedQuery = URLEncoder.encode(query, ENCODING);
         String url = String.format(grafanaConfig.getUrl(), encodedQuery);
         HttpGet request = new HttpGet(url);
@@ -85,7 +87,8 @@ public class OptimizerUtils {
             if (array != null && array.length() > 1) {
                 if (array.get(INDEX_ONE) instanceof Integer && (int) array.get(INDEX_ONE) > maxValue) {
                     maxValue = (int) array.get(INDEX_ONE);
-                } else if (array.get(INDEX_ONE) instanceof Double && ((Double) array.get(INDEX_ONE)).intValue() > maxValue) {
+                } else if (array.get(INDEX_ONE) instanceof Double
+                        && ((Double) array.get(INDEX_ONE)).intValue() > maxValue) {
                     maxValue = ((Double) array.get(INDEX_ONE)).longValue();
                 } else if (array.get(INDEX_ONE) instanceof Long && ((Long) array.get(INDEX_ONE)) > maxValue) {
                     maxValue = (Long) array.get(INDEX_ONE);
@@ -144,4 +147,5 @@ public class OptimizerUtils {
         AVERAGE,
         MAX
     }
+
 }
