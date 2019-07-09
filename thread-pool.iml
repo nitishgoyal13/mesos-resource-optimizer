@@ -233,5 +233,7 @@
     <orderEntry type="library" name="Maven: org.gnu:gnu-crypto:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.luaj:luaj-jse:3.0" level="project" />
     <orderEntry type="library" name="Maven: org.mindrot:jbcrypt:0.3m" level="project" />
+    <orderEntry type="library" name="Maven: com.phonepe.platform:rosey-dropwizard-config:1.6" level="project" />
+    <orderEntry type="library" name="Maven: com.phonepe.platform:rosey-client-models:1.6" level="project" />
   </component>
 </module>
