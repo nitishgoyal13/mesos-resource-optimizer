@@ -70,7 +70,6 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .grafanaConfig(grafanaConfig)
                 .client(HttpClientFactory.getHttpClient())
                 .build();
-        Map<String, String> serviceVsOwnerMap = createServiceVsOwnerMap(serviceConfigs);
 
         Map<String, String> serviceVsOwnerEmail = createAppVsOwnerMap(serviceConfigs);
 
@@ -80,7 +79,7 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .grafanaService(grafanaService)
                 .threadPoolConfig(hystrixThreadPoolConfig)
                 .mailSender(mailSender)
-                .serviceVsOwnerMap(serviceVsOwnerMap)
+                .serviceVsOwnerMap(serviceVsOwnerEmail)
                 .mailConfig(mailConfig)
                 .grafanaConfig(grafanaConfig)
                 .clusters(configuration.getClusters())
@@ -153,13 +152,6 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 );
 
 
-    }
-
-    private Map<String, String> createServiceVsOwnerMap(List<ServiceConfig> serviceConfigs) {
-        Map<String, String> serviceVsOwnerMap = new HashMap<>();
-        serviceConfigs.forEach(
-                serviceConfig -> serviceVsOwnerMap.put(serviceConfig.getService(), serviceConfig.getOwnerEmail()));
-        return serviceVsOwnerMap;
     }
 
     private Map<String, String> createAppVsOwnerMap(List<ServiceConfig> serviceConfigs) {

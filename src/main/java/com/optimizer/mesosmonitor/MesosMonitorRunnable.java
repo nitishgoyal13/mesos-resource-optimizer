@@ -23,12 +23,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /***
  Created by nitish.goyal on June, 2019
  ***/
+@Slf4j
 public class MesosMonitorRunnable implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MesosMonitorRunnable.class.getSimpleName());
@@ -107,17 +109,20 @@ public class MesosMonitorRunnable implements Runnable {
             long totalRes = appVsTotalResources.get(app);
             long usedRes = appVsUsedResources.get(app);
 
-            String ownerEmail = mailConfig.getDefaultOwnersEmails();
+            StringBuilder sb = new StringBuilder();
+            sb.append(mailConfig.getDefaultOwnersEmails());
             if (appVsOwnerMap.containsKey(app)) {
-                ownerEmail = appVsOwnerMap.get(app);
+                sb.append(",");
+                sb.append(appVsOwnerMap.get(app));
             }
+            log.info(String.format("Email for app %s, email : %s ", app, sb.toString()));
             if (totalRes > 0 && usedRes > 0) {
                 long usagePercentage = usedRes * 100 / totalRes;
                 if (usagePercentage < thresholdParams.getMinResourcePercentage()) {
-                    reduceResourceUsage(app, totalRes, usedRes, ownerEmail, thresholdParams, resourcesOptimized,
+                    reduceResourceUsage(app, totalRes, usedRes, sb.toString(), thresholdParams, resourcesOptimized,
                             mesosOptimizationResponse);
                 } else if (usagePercentage > thresholdParams.getMaxResourcePercentage()) {
-                    increaseResourceUsage(app, totalRes, usedRes, ownerEmail, thresholdParams, resourcesOptimized,
+                    increaseResourceUsage(app, totalRes, usedRes, sb.toString(), thresholdParams, resourcesOptimized,
                             mesosOptimizationResponse);
                 }
             }
@@ -132,7 +137,8 @@ public class MesosMonitorRunnable implements Runnable {
 
         long extendBy = usedRes - ((totalRes * thresholdParams.getMinResourcePercentage()) / 100);
         if (extendBy > thresholdParams.getExtendThreshold()) {
-            LOGGER.info("App: {} Total Resource: {} Used Resource: {} Extend: {}", app, totalRes, usedRes, extendBy);
+            LOGGER.info("App: {} Total Resource: {} Used Resource: {} Extend: {} Email : {}", app, totalRes, usedRes,
+                    extendBy, ownerEmail);
             AppOptimizationResource appOptimizationResource = AppOptimizationResource.builder()
                     .app(app)
                     .extendBy(extendBy)
@@ -166,7 +172,8 @@ public class MesosMonitorRunnable implements Runnable {
                     .build();
             mesosOptimizationResponse.getAppsOptimizedList()
                     .add(appOptimizationResource);
-            LOGGER.info("App: {} Total Resource: {} Used Resource: {} Reduce: {}", app, totalRes, usedRes, reduceBy);
+            LOGGER.info("App: {} Total Resource: {} Used Resource: {} Reduce: {} Email {}", app, totalRes, usedRes,
+                    reduceBy, ownerEmail);
             mailSender.send(MAIL_SUBJECT,
                     getReduceByMailBody(app, totalRes, usedRes, reduceBy, ownerEmail,
                             thresholdParams.getMinResourcePercentage(),

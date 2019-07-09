@@ -26,7 +26,7 @@ public class OptimizerUtils {
     public static final int NULL_VALUE = -1;
     public static final int STATUS_OK_RANGE_START = 200;
     public static final int STATUS_OK_RANGE_END = 300;
-    public static final String MAIL_SUBJECT = "Thread Pool Optimization";
+    public static final String MAIL_SUBJECT = "Mesos Resource Optimization";
     private static final Logger LOGGER = LoggerFactory.getLogger(OptimizerUtils.class);
     private static final String ENCODING = "UTF-8";
 
