@@ -39,7 +39,7 @@ public class MailSender implements Managed {
         try {
             MimeMessage message = new MimeMessage(mailSession);
             message.setFrom(new InternetAddress(mailConfig.getFrom()));
-            if(mailConfig.isDefaultOwnersEnabled()) {
+            if (mailConfig.isDefaultOwnersEnabled()) {
                 recipients = String.join(",", recipients, mailConfig.getDefaultOwnersEmails());
             }
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipients));

@@ -33,13 +33,13 @@ public class OptimizerServer extends Application<OptimizerConfig> {
     public void run(OptimizerConfig configuration, Environment environment) {
 
         ThreadPoolConfig hystrixThreadPoolConfig = configuration.getThreadPoolConfig();
-        if(hystrixThreadPoolConfig == null) {
+        if (hystrixThreadPoolConfig == null) {
             hystrixThreadPoolConfig = ThreadPoolConfig.builder()
                     .build();
             configuration.setThreadPoolConfig(hystrixThreadPoolConfig);
         }
         MesosMonitorConfig mesosMonitorConfig = configuration.getMesosMonitorConfig();
-        if(mesosMonitorConfig == null) {
+        if (mesosMonitorConfig == null) {
             mesosMonitorConfig = MesosMonitorConfig.builder()
                     .build();
             configuration.setMesosMonitorConfig(mesosMonitorConfig);
@@ -78,11 +78,11 @@ public class OptimizerServer extends Application<OptimizerConfig> {
         environment.lifecycle()
                 .manage(mailSender);
 
-        if(configuration.getThreadPoolConfig()
+        if (configuration.getThreadPoolConfig()
                 .isEnabled()) {
             scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolRunnable, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
-                                                         hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-                                                        );
+                    hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+            );
         }
 
 
@@ -93,7 +93,7 @@ public class OptimizerServer extends Application<OptimizerConfig> {
     private void optimizeMesosResources(OptimizerConfig optimizerConfig, MailSender mailSender, GrafanaService grafanaService,
                                         Map<String, String> serviceVsOwnerEmail, ScheduledExecutorService scheduledExecutorService) {
         MesosMonitorConfig mesosMonitorConfig = optimizerConfig.getMesosMonitorConfig();
-        if(!mesosMonitorConfig.isEnabled()) {
+        if (!mesosMonitorConfig.isEnabled()) {
             return;
         }
         MesosMonitorRunnable mesosMonitorRunnable = MesosMonitorRunnable.builder()
@@ -106,14 +106,14 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .build();
 
         scheduledExecutorService.scheduleAtFixedRate(mesosMonitorRunnable, mesosMonitorConfig.getInitialDelayInSeconds(),
-                                                     mesosMonitorConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-                                                    );
+                mesosMonitorConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+        );
     }
 
     private void optimizeThreadPools(GrafanaService grafanaService, MailSender mailSender, Map<String, String> serviceVsOwnerEmail,
                                      OptimizerConfig configuration, ScheduledExecutorService scheduledExecutorService) {
 
-        if(!configuration.getThreadPoolConfig()
+        if (!configuration.getThreadPoolConfig()
                 .isEnabled()) {
             return;
         }
@@ -129,8 +129,8 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .build();
 
         scheduledExecutorService.scheduleAtFixedRate(hystrixThreadPoolHostRunnable, threadPoolConfig.getInitialDelayInSeconds(),
-                                                     threadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-                                                    );
+                threadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
+        );
 
 
     }

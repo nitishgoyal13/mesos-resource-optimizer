@@ -53,11 +53,11 @@ public class GrafanaService {
 
     public List<HttpResponse> execute(List<String> queries) {
         List<HttpResponse> responses = new ArrayList<>();
-        for(List<String> queryChunk : Lists.partition(queries, 1)) {
+        for (List<String> queryChunk : Lists.partition(queries, 1)) {
             String query = String.join(";", queryChunk);
             query = String.format(QUERY, query);
             HttpResponse response = getHttpResponse(client, query, grafanaConfig);
-            if(response != null) {
+            if (response != null) {
                 responses.add(response);
             }
         }
@@ -74,25 +74,25 @@ public class GrafanaService {
         try {
             String poolListQuery = String.format(POOL_LIST_QUERY, prefix, clusterName);
             HttpResponse response = getHttpResponse(client, poolListQuery, grafanaConfig);
-            if(response == null) {
+            if (response == null) {
                 return Collections.emptyMap();
             }
             String data = EntityUtils.toString(response.getEntity());
             JSONArray serviceJsonArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
-            if(serviceJsonArray == null) {
+            if (serviceJsonArray == null) {
                 LOGGER.error("Error in getting value from data: {} ", data);
                 return Collections.emptyMap();
             }
             String poolListPattern = String.format(POOL_LIST_PATTERN, prefix, clusterName);
             Pattern pattern = Pattern.compile(poolListPattern);
-            for(int i = 0; i < serviceJsonArray.length(); i++) {
-                String metrics = ((JSONArray)serviceJsonArray.get(i)).get(0)
+            for (int i = 0; i < serviceJsonArray.length(); i++) {
+                String metrics = ((JSONArray) serviceJsonArray.get(i)).get(0)
                         .toString();
                 Matcher matcher = pattern.matcher(metrics);
-                if(matcher.find()) {
+                if (matcher.find()) {
                     String pool = matcher.group(INDEX_ONE);
                     String service = pool.split("\\.")[0];
-                    if(serviceVsPoolList.containsKey(service)) {
+                    if (serviceVsPoolList.containsKey(service)) {
                         serviceVsPoolList.get(service)
                                 .add(pool);
                     } else {
@@ -116,25 +116,25 @@ public class GrafanaService {
             String query = String.format(QUERY, appListQuery);
 
             HttpResponse response = getHttpResponse(client, query, grafanaConfig);
-            if(response == null) {
+            if (response == null) {
                 return Collections.emptyList();
             }
 
             String data = EntityUtils.toString(response.getEntity());
             JSONArray serviceJsonArray = OptimizerUtils.getValuesFromMeasurementResponseData(data);
-            if(serviceJsonArray == null) {
+            if (serviceJsonArray == null) {
                 LOGGER.error("Error in getting value from data: {} ", data);
                 return Collections.emptyList();
             }
             String appListPattern = String.format(APP_LIST_PATTERN, prefix);
             Pattern pattern = Pattern.compile(appListPattern);
-            for(int i = 0; i < serviceJsonArray.length(); i++) {
-                String metrics = ((JSONArray)serviceJsonArray.get(i)).get(0)
+            for (int i = 0; i < serviceJsonArray.length(); i++) {
+                String metrics = ((JSONArray) serviceJsonArray.get(i)).get(0)
                         .toString();
                 Matcher matcher = pattern.matcher(metrics);
-                if(matcher.find()) {
+                if (matcher.find()) {
                     String appId = matcher.group(INDEX_ONE);
-                    if(!appList.contains(appId)) {
+                    if (!appList.contains(appId)) {
                         appList.add(appId);
                     }
                 } else {
@@ -152,33 +152,33 @@ public class GrafanaService {
                                                                ExtractionStrategy extractionStrategy) throws Exception {
         Map<String, Long> entityVsResult = new HashMap<>();
         int index = 0;
-        for(List<String> queryChunk : Lists.partition(queries, PARTITION_SIZE)) {
+        for (List<String> queryChunk : Lists.partition(queries, PARTITION_SIZE)) {
             List<HttpResponse> httpResponses = execute(queryChunk);
-            if(CollectionUtils.isEmpty(httpResponses)) {
+            if (CollectionUtils.isEmpty(httpResponses)) {
                 return Collections.emptyMap();
             }
-            for(HttpResponse httpResponse : httpResponses) {
+            for (HttpResponse httpResponse : httpResponses) {
                 try {
                     int status = httpResponse.getStatusLine()
                             .getStatusCode();
-                    if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
+                    if (status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
                         LOGGER.error("Error in Http get, Status Code: {} with received Response: {}", httpResponse.getStatusLine()
                                 .getStatusCode(), httpResponse);
                         return Collections.emptyMap();
                     }
                     String data = EntityUtils.toString(httpResponse.getEntity());
                     JSONObject jsonObject = new JSONObject(data);
-                    if(jsonObject.has(RESULTS)) {
-                        JSONArray resultArray = (JSONArray)jsonObject.get(RESULTS);
-                        for(int resultIndex = 0; resultIndex < resultArray.length(); resultIndex++) {
+                    if (jsonObject.has(RESULTS)) {
+                        JSONArray resultArray = (JSONArray) jsonObject.get(RESULTS);
+                        for (int resultIndex = 0; resultIndex < resultArray.length(); resultIndex++) {
                             long result = getValueFromGrafanaResponse(resultArray.get(resultIndex)
-                                                                              .toString(), extractionStrategy);
+                                    .toString(), extractionStrategy);
                             entityVsResult.put(entities.get(index), result);
                             index++;
                         }
                     }
                 } finally {
-                    if(httpResponse.getEntity() != null) {
+                    if (httpResponse.getEntity() != null) {
                         EntityUtils.consume(httpResponse.getEntity());
                     }
                 }

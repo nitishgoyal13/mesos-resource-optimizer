@@ -62,13 +62,13 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
     @Override
     public void run() {
         List<OptimisedConfig> optimisedConfigs = Lists.newArrayList();
-        for(String cluster : CollectionUtils.nullSafeList(clusters)) {
+        for (String cluster : CollectionUtils.nullSafeList(clusters)) {
             Map<String, List<String>> serviceVsPoolList = grafanaService.getServiceVsPoolList(grafanaConfig.getPrefix(), cluster);
-            if(CollectionUtils.isEmpty(serviceVsPoolList)) {
+            if (CollectionUtils.isEmpty(serviceVsPoolList)) {
                 LOGGER.error("Error in getting serviceVsPoolList. Got empty map");
                 continue;
             }
-            for(String service : CollectionUtils.nullAndEmptySafeValueList(serviceVsPoolList.keySet())) {
+            for (String service : CollectionUtils.nullAndEmptySafeValueList(serviceVsPoolList.keySet())) {
                 OptimisedConfig optimisedConfig = OptimisedConfig.builder()
                         .cluster(cluster)
                         .service(service)
@@ -84,18 +84,18 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
                                          OptimisedConfig optimisedConfig) {
         List<String> hystrixPools = serviceVsPoolList.get(serviceName);
 
-        for(String hystrixPool : CollectionUtils.nullSafeList(hystrixPools)) {
+        for (String hystrixPool : CollectionUtils.nullSafeList(hystrixPools)) {
 
             optimisedConfig.setPool(hystrixPool);
 
             Map<String, Long> hostVsMaxPool = executePoolQueryByHost(cluster, hystrixPool, MAX_POOL_QUERY_BY_HOST,
-                                                                     ExtractionStrategy.AVERAGE
-                                                                    );
+                    ExtractionStrategy.AVERAGE
+            );
             Map<String, Long> hostVsPoolUsage = executePoolQueryByHost(cluster, hystrixPool, POOL_USAGE_QUERY_BY_HOST,
-                                                                       ExtractionStrategy.MAX
-                                                                      );
+                    ExtractionStrategy.MAX
+            );
 
-            for(Map.Entry<String, Long> entry : CollectionUtils.nullSafeMap(hostVsMaxPool)
+            for (Map.Entry<String, Long> entry : CollectionUtils.nullSafeMap(hostVsMaxPool)
                     .entrySet()) {
                 String host = entry.getKey();
                 optimisedConfig.setHost(host);
@@ -103,7 +103,7 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
                 long maxPool = hostVsMaxPool.get(host);
                 long poolUsage = hostVsPoolUsage.get(host);
 
-                if(maxPool <= 0 || poolUsage <= 0) {
+                if (maxPool <= 0 || poolUsage <= 0) {
                     continue;
                 }
 
@@ -115,20 +115,20 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
     }
 
     private void extendPool(OptimisedConfig optimisedConfig, String hystrixPool, long maxPool, long poolUsage, long usagePercentage) {
-        if(usagePercentage > threadPoolConfig.getThresholdMaxUsagePercentage()) {
+        if (usagePercentage > threadPoolConfig.getThresholdMaxUsagePercentage()) {
             long extendBy = poolUsage - ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100);
-            if(extendBy > 0) {
-                optimisedConfig.setOptimisedPoolValue((int)(maxPool + extendBy));
+            if (extendBy > 0) {
+                optimisedConfig.setOptimisedPoolValue((int) (maxPool + extendBy));
                 LOGGER.info("Hystrix Pool: {} Max:{}, Usage: {}, Extend By: {} ", hystrixPool, maxPool, poolUsage, extendBy);
             }
         }
     }
 
     private void reducePool(OptimisedConfig optimisedConfig, String hystrixPool, long maxPool, long poolUsage, long usagePercentage) {
-        if(usagePercentage < threadPoolConfig.getThresholdMinUsagePercentage()) {
+        if (usagePercentage < threadPoolConfig.getThresholdMinUsagePercentage()) {
             long reduceBy = ((maxPool * threadPoolConfig.getThresholdMinUsagePercentage()) / 100) - poolUsage;
-            if(reduceBy > threadPoolConfig.getReduceByThreshold()) {
-                optimisedConfig.setOptimisedPoolValue((int)(maxPool - reduceBy));
+            if (reduceBy > threadPoolConfig.getReduceByThreshold()) {
+                optimisedConfig.setOptimisedPoolValue((int) (maxPool - reduceBy));
                 LOGGER.info("Hystrix Pool: {} Max: {}, Usage: {}, Reduce By: {}", hystrixPool, maxPool, poolUsage, reduceBy);
             }
         }
@@ -139,8 +139,8 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
 
         try {
             String poolQuery = String.format(query, grafanaConfig.getPrefix(), cluster, hystrixPool,
-                                             Integer.toString(threadPoolConfig.getQueryDurationInHours())
-                                            );
+                    Integer.toString(threadPoolConfig.getQueryDurationInHours())
+            );
             return executeGrafanaQueriesByHost(poolQuery, extractionStrategy);
         } catch (Exception e) {
             LOGGER.error("Error in executing grafana queries: " + e.getMessage(), e);
@@ -155,22 +155,22 @@ public class HystrixThreadPoolHostRunnable implements Runnable {
 
         int status = httpResponse.getStatusLine()
                 .getStatusCode();
-        if(status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
+        if (status < STATUS_OK_RANGE_START || status >= STATUS_OK_RANGE_END) {
             LOGGER.error("Error in Http get, Status Code: {} with response {}", httpResponse.getStatusLine()
                     .getStatusCode(), httpResponse);
             return Collections.emptyMap();
         }
         String data = EntityUtils.toString(httpResponse.getEntity());
         JSONObject jsonObject = new JSONObject(data);
-        if(jsonObject.has(RESULTS)) {
-            JSONArray resultArray = (JSONArray)jsonObject.get(RESULTS);
+        if (jsonObject.has(RESULTS)) {
+            JSONArray resultArray = (JSONArray) jsonObject.get(RESULTS);
             JSONObject resultObject = getObjectFromJSONArray(resultArray, INDEX_ZERO);
             JSONArray seriesJSONArray = getArrayFromJSONObject(resultObject, SERIES);
-            for(int index = 0; index < seriesJSONArray.length(); index++) {
-                JSONObject seriesObject = (JSONObject)seriesJSONArray.get(index);
+            for (int index = 0; index < seriesJSONArray.length(); index++) {
+                JSONObject seriesObject = (JSONObject) seriesJSONArray.get(index);
                 long value = getValueFromGrafanaResponseByHost(seriesObject.toString(), extractionStrategy);
-                if(seriesObject.get(TAGS) != null && ((JSONObject)seriesObject.get(TAGS)).get(HOST) != null) {
-                    hostVsResult.put((String)((JSONObject)seriesObject.get(TAGS)).get(HOST), value);
+                if (seriesObject.get(TAGS) != null && ((JSONObject) seriesObject.get(TAGS)).get(HOST) != null) {
+                    hostVsResult.put((String) ((JSONObject) seriesObject.get(TAGS)).get(HOST), value);
                 }
             }
         }
