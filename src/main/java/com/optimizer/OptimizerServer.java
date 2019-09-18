@@ -10,9 +10,7 @@ import com.optimizer.grafana.GrafanaService;
 import com.optimizer.http.HttpClientFactory;
 import com.optimizer.mail.MailSender;
 import com.optimizer.mesosmonitor.MesosMonitorRunnable;
-import com.optimizer.resources.OptimizerResource;
 import com.optimizer.threadpool.HystrixThreadPoolHostRunnable;
-import com.optimizer.threadpool.HystrixThreadPoolRunnable;
 import com.phonepe.rosey.dwconfig.RoseyConfigSourceProvider;
 import io.dropwizard.Application;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
@@ -54,6 +52,7 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                     .build();
             configuration.setThreadPoolConfig(hystrixThreadPoolConfig);
         }
+
         MesosMonitorConfig mesosMonitorConfig = configuration.getMesosMonitorConfig();
         if (mesosMonitorConfig == null) {
             mesosMonitorConfig = MesosMonitorConfig.builder()
@@ -75,16 +74,6 @@ public class OptimizerServer extends Application<OptimizerConfig> {
 
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(3);
 
-        HystrixThreadPoolRunnable hystrixThreadPoolRunnable = HystrixThreadPoolRunnable.builder()
-                .grafanaService(grafanaService)
-                .threadPoolConfig(hystrixThreadPoolConfig)
-                .mailSender(mailSender)
-                .serviceVsOwnerMap(serviceVsOwnerEmail)
-                .mailConfig(mailConfig)
-                .grafanaConfig(grafanaConfig)
-                .clusters(configuration.getClusters())
-                .build();
-
         optimizeThreadPools(grafanaService, mailSender, serviceVsOwnerEmail, configuration, scheduledExecutorService);
 
         optimizeMesosResources(configuration, mailSender, grafanaService, serviceVsOwnerEmail,
@@ -93,16 +82,7 @@ public class OptimizerServer extends Application<OptimizerConfig> {
         environment.lifecycle()
                 .manage(mailSender);
 
-        if (configuration.getThreadPoolConfig()
-                .isEnabled()) {
-            scheduledExecutorService
-                    .scheduleAtFixedRate(hystrixThreadPoolRunnable, hystrixThreadPoolConfig.getInitialDelayInSeconds(),
-                            hystrixThreadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-                    );
-        }
 
-        environment.jersey()
-                .register(new OptimizerResource(hystrixThreadPoolRunnable));
     }
 
     private void optimizeMesosResources(OptimizerConfig optimizerConfig, MailSender mailSender,

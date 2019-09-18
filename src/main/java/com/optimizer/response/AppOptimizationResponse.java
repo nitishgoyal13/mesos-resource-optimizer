@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AppOptimizationResource {
+public class AppOptimizationResponse {
 
     private String app;
 

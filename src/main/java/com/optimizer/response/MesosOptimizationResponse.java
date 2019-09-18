@@ -15,6 +15,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class MesosOptimizationResponse {
 
-    private List<AppOptimizationResource> appsOptimizedList;
+    private List<AppOptimizationResponse> appsOptimizedList;
 
 }

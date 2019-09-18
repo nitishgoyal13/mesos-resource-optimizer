@@ -16,7 +16,7 @@ import com.optimizer.config.MesosMonitorConfig;
 import com.optimizer.config.ThresholdParams;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.mail.MailSender;
-import com.optimizer.response.AppOptimizationResource;
+import com.optimizer.response.AppOptimizationResponse;
 import com.optimizer.response.MesosOptimizationResponse;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -115,7 +115,7 @@ public class MesosMonitorRunnable implements Runnable {
                 sb.append(",");
                 sb.append(appVsOwnerMap.get(app));
             }
-            log.info(String.format("Email for app %s, email : %s ", app, sb.toString()));
+            log.info("Email for app {}, email : {} ", app, sb.toString());
             if (totalRes > 0 && usedRes > 0) {
                 long usagePercentage = usedRes * 100 / totalRes;
                 if (usagePercentage < thresholdParams.getMinResourcePercentage()) {
@@ -139,7 +139,7 @@ public class MesosMonitorRunnable implements Runnable {
         if (extendBy > thresholdParams.getExtendThreshold()) {
             LOGGER.info("App: {} Total Resource: {} Used Resource: {} Extend: {} Email : {}", app, totalRes, usedRes,
                     extendBy, ownerEmail);
-            AppOptimizationResource appOptimizationResource = AppOptimizationResource.builder()
+            AppOptimizationResponse appOptimizationResponse = AppOptimizationResponse.builder()
                     .app(app)
                     .extendBy(extendBy)
                     .resourcesOptimized(resourcesOptimized)
@@ -147,7 +147,7 @@ public class MesosMonitorRunnable implements Runnable {
                     .used(usedRes)
                     .build();
             mesosOptimizationResponse.getAppsOptimizedList()
-                    .add(appOptimizationResource);
+                    .add(appOptimizationResponse);
             mailSender.send(MAIL_SUBJECT,
                     getExtendByMailBody(app, totalRes, usedRes, extendBy, ownerEmail,
                             thresholdParams.getMinResourcePercentage(),
@@ -163,7 +163,7 @@ public class MesosMonitorRunnable implements Runnable {
 
         long reduceBy = ((totalRes * thresholdParams.getMinResourcePercentage()) / 100) - usedRes;
         if (reduceBy > thresholdParams.getReduceThreshold()) {
-            AppOptimizationResource appOptimizationResource = AppOptimizationResource.builder()
+            AppOptimizationResponse appOptimizationResponse = AppOptimizationResponse.builder()
                     .app(app)
                     .reduceBy(reduceBy)
                     .resourcesOptimized(resourcesOptimized)
@@ -171,7 +171,7 @@ public class MesosMonitorRunnable implements Runnable {
                     .used(usedRes)
                     .build();
             mesosOptimizationResponse.getAppsOptimizedList()
-                    .add(appOptimizationResource);
+                    .add(appOptimizationResponse);
             LOGGER.info("App: {} Total Resource: {} Used Resource: {} Reduce: {} Email {}", app, totalRes, usedRes,
                     reduceBy, ownerEmail);
             mailSender.send(MAIL_SUBJECT,
@@ -211,8 +211,7 @@ public class MesosMonitorRunnable implements Runnable {
         return String
                 .format("Hi, %s <br> App %s can be optimized. %s usage is consistently below %s%% in last 8 days. " +
                                 " <br>App: %s  <br> Total %s: %s <br> Used %s: %s <br> Can be reduced by: %s " +
-                                " <br> Kindly reach out to Nitish for any queries. If you aren't " +
-                                "the service owner for the mail received, kindly help me out figuring the service owner",
+                                " Also check your network usage before reducing the number of instances",
                         ownerEmail,
                         entityToBeOptimized, entityToBeOptimized, Integer.toString(threshodMinUsagePercentage), app,
                         entityToBeOptimized, totalResource, entityToBeOptimized, usedResource, reduceBy
@@ -224,9 +223,7 @@ public class MesosMonitorRunnable implements Runnable {
             int threshodMaxUsagePercentage, String entityToBeOptimized) {
         return String
                 .format("Hi, %s <br> App %s can be optimized. %s usage is consistently above %s%% in last 8 days. " +
-                                " <br>App: %s  <br> Total %s: %s <br> Used %s: %s <br> Can be extended by: %s " +
-                                " <br> Kindly reach out to Nitish for any queries. If you aren't " +
-                                "the service owner for the mail received, kindly help me out figuring the service owner",
+                                " <br>App: %s  <br> Total %s: %s <br> Used %s: %s <br> Can be extended by: %s ",
                         ownerEmail,
                         entityToBeOptimized, entityToBeOptimized, Integer.toString(threshodMaxUsagePercentage), app,
                         entityToBeOptimized, totalResource, entityToBeOptimized, usedResource, reduceBy
@@ -236,12 +233,12 @@ public class MesosMonitorRunnable implements Runnable {
     private String getMailBody(MesosOptimizationResponse mesosOptimizationResponse) {
         StringBuilder sb = new StringBuilder();
         String limiter = ", %s";
-        for (AppOptimizationResource appOptimizationResource : mesosOptimizationResponse.getAppsOptimizedList()) {
-            sb.append(appOptimizationResource.getApp());
-            sb.append(String.format(limiter, appOptimizationResource.getAllocated()));
-            sb.append(String.format(limiter, appOptimizationResource.getUsed()));
-            sb.append(String.format(limiter, appOptimizationResource.getExtendBy()));
-            sb.append(String.format(limiter, appOptimizationResource.getReduceBy()));
+        for (AppOptimizationResponse appOptimizationResponse : mesosOptimizationResponse.getAppsOptimizedList()) {
+            sb.append(appOptimizationResponse.getApp());
+            sb.append(String.format(limiter, appOptimizationResponse.getAllocated()));
+            sb.append(String.format(limiter, appOptimizationResponse.getUsed()));
+            sb.append(String.format(limiter, appOptimizationResponse.getExtendBy()));
+            sb.append(String.format(limiter, appOptimizationResponse.getReduceBy()));
             sb.append(System.lineSeparator());
         }
         return sb.toString();
