@@ -38,7 +38,7 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                             new EnvironmentVariableSubstitutor()));
         } else {
             bootstrap.setConfigurationSourceProvider(
-                    new SubstitutingSourceProvider(new RoseyConfigSourceProvider("platform", "optimizer"),
+                    new SubstitutingSourceProvider(new RoseyConfigSourceProvider("dataplatform", "optimizer"),
                             new EnvironmentVariableSubstitutor()));
         }
     }
