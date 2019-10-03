@@ -23,10 +23,12 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
 /***
  Created by nitish.goyal on 18/02/19
  ***/
+@Slf4j
 public class OptimizerServer extends Application<OptimizerConfig> {
 
     @Override
@@ -59,6 +61,7 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                     .build();
             configuration.setMesosMonitorConfig(mesosMonitorConfig);
         }
+        log.info("Mesos Montior config : " + mesosMonitorConfig);
         GrafanaConfig grafanaConfig = configuration.getGrafanaConfig();
         MailConfig mailConfig = configuration.getMailConfig();
 

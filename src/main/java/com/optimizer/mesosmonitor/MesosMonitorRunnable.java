@@ -57,6 +57,7 @@ public class MesosMonitorRunnable implements Runnable {
 
     @Override
     public void run() {
+        log.info("Running mesos resource optimizer");
         MesosOptimizationResponse mesosOptimizationResponse = MesosOptimizationResponse.builder()
                 .appsOptimizedList(Lists.newArrayList())
                 .build();
@@ -207,9 +208,10 @@ public class MesosMonitorRunnable implements Runnable {
             String ownerEmail,
             int threshodMinUsagePercentage, String entityToBeOptimized) {
         return String
-                .format("Hi, %s <br> App %s can be optimized. %s usage is consistently below %s%% in last 8 days. " +
-                                " <br>App: %s  <br> Total %s: %s <br> Used %s: %s <br> Can be reduced by: %s " +
-                                " Also check your network usage before reducing the number of instances",
+                .format("@%s <br> %s can be optimized. %s usage is consistently below %s%% in last 8 days. " +
+                                " <br>App: %s  <br> Total allocated %s: %s <br> Used %s by application: %s <br>"
+                                + " Can be reduced by: %s " +
+                                ". Also check your network usage before reducing the number of instances",
                         ownerEmail, entityToBeOptimized, entityToBeOptimized,
                         Integer.toString(threshodMinUsagePercentage), app, entityToBeOptimized, totalResource,
                         entityToBeOptimized, usedResource, reduceBy);
@@ -219,8 +221,10 @@ public class MesosMonitorRunnable implements Runnable {
             String ownerEmail,
             int threshodMaxUsagePercentage, String entityToBeOptimized) {
         return String
-                .format("Hi, %s <br> App %s can be optimized. %s usage is consistently above %s%% in last 8 days. " +
-                                " <br>App: %s  <br> Total %s: %s <br> Used %s: %s <br> Can be extended by: %s ",
+                .format("@%s <br> %s can be optimized. %s usage is consistently above %s%% in last 8 days. " +
+                                " <br>App name: %s  <br> Total Allocated %s: %s <br> Used %s used by application: %s <br>"
+                                + "Should be extended by: %s by either increasing resources per instance or increasing "
+                                + "number of instances",
                         ownerEmail, entityToBeOptimized, entityToBeOptimized,
                         Integer.toString(threshodMaxUsagePercentage), app, entityToBeOptimized, totalResource,
                         entityToBeOptimized, usedResource, reduceBy);
