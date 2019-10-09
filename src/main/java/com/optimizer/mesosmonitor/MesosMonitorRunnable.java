@@ -232,15 +232,18 @@ public class MesosMonitorRunnable implements Runnable {
 
     private String getMailBody(MesosOptimizationResponse mesosOptimizationResponse) {
         StringBuilder sb = new StringBuilder();
-        String limiter = ", %s";
+        String formatter = "<td>%s</td>";
+        sb.append("<html><body><table cellpadding=\"4\" style=\"border:1px solid #000000;border-collapse:collapse\" border=\"1\">");
+        sb.append("<tbody> <tr><th>App</th> <th>Allocated</th> <th>Used</th> <th>Extend By</th> <th>Reduce By</th> </tr>");
+
         for (AppOptimizationResponse appOptimizationResponse : mesosOptimizationResponse.getAppsOptimizedList()) {
-            sb.append(appOptimizationResponse.getApp());
-            sb.append(String.format(limiter, appOptimizationResponse.getAllocated()));
-            sb.append(String.format(limiter, appOptimizationResponse.getUsed()));
-            sb.append(String.format(limiter, appOptimizationResponse.getExtendBy()));
-            sb.append(String.format(limiter, appOptimizationResponse.getReduceBy()));
-            sb.append(System.lineSeparator());
+            sb.append(String.format("<tr>%s", String.format(formatter, appOptimizationResponse.getApp())));
+            sb.append(String.format(formatter, appOptimizationResponse.getAllocated()));
+            sb.append(String.format(formatter, appOptimizationResponse.getUsed()));
+            sb.append(String.format(formatter, appOptimizationResponse.getExtendBy()));
+            sb.append(String.format("%s</tr>", String.format(formatter, appOptimizationResponse.getReduceBy())));
         }
+        sb.append("</tbody></table></body></html>");
         return sb.toString();
     }
 
