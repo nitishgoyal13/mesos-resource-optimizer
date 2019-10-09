@@ -149,12 +149,12 @@ public class MesosMonitorRunnable implements Runnable {
                     .build();
             mesosOptimizationResponse.getAppsOptimizedList()
                     .add(appOptimizationResponse);
-            mailSender.send(MAIL_SUBJECT,
+            /*mailSender.send(MAIL_SUBJECT,
                     getExtendByMailBody(app, totalRes, usedRes, extendBy, ownerEmail,
                             thresholdParams.getMinResourcePercentage(),
                             resourcesOptimized.name()
                     ), ownerEmail
-            );
+            );*/
         }
     }
 
@@ -175,9 +175,9 @@ public class MesosMonitorRunnable implements Runnable {
                     .add(appOptimizationResponse);
             LOGGER.info("App: {} Total Resource: {} Used Resource: {} Reduce: {} Email {}", app, totalRes, usedRes,
                     reduceBy, ownerEmail);
-            mailSender.send(MAIL_SUBJECT,
+            /*mailSender.send(MAIL_SUBJECT,
                     getReduceByMailBody(app, totalRes, usedRes, reduceBy, ownerEmail,
-                            thresholdParams.getMinResourcePercentage(), resourcesOptimized.name()), ownerEmail);
+                            thresholdParams.getMinResourcePercentage(), resourcesOptimized.name()), ownerEmail);*/
         }
     }
 
