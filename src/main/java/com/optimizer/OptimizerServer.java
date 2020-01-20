@@ -1,5 +1,6 @@
 package com.optimizer;
 
+import com.collections.CollectionUtils;
 import com.optimizer.config.GrafanaConfig;
 import com.optimizer.config.MailConfig;
 import com.optimizer.config.MesosMonitorConfig;
@@ -139,8 +140,10 @@ public class OptimizerServer extends Application<OptimizerConfig> {
 
     private Map<String, String> createAppVsOwnerMap(List<ServiceConfig> serviceConfigs) {
         Map<String, String> appVsOwnerMap = new HashMap<>();
-        serviceConfigs
-                .forEach(serviceConfig -> appVsOwnerMap.put(serviceConfig.getService(), serviceConfig.getOwnerEmail()));
+        if (CollectionUtils.isNotEmpty(serviceConfigs)){
+            serviceConfigs
+                    .forEach(serviceConfig -> appVsOwnerMap.put(serviceConfig.getService(), serviceConfig.getOwnerEmail()));
+        }
         return appVsOwnerMap;
     }
 

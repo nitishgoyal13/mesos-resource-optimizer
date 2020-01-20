@@ -6,7 +6,6 @@ import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.TOTAL_MEMORY;
 import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.USED_CPU;
 import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.USED_MEMORY;
 import static com.optimizer.util.OptimizerUtils.ExtractionStrategy;
-import static com.optimizer.util.OptimizerUtils.MAIL_SUBJECT;
 
 import com.collections.CollectionUtils;
 import com.google.common.collect.Lists;
@@ -232,9 +231,17 @@ public class MesosMonitorRunnable implements Runnable {
 
     private String getMailBody(MesosOptimizationResponse mesosOptimizationResponse) {
         StringBuilder sb = new StringBuilder();
+        sb.append("Below analysis is based on last 8 days usage. "
+                + "Refer to this graph for tracking your app usage : "
+                + "http://prd-grafana001.phonepe.nm1/dashboard/db/mesos-monitor");
+        sb.append(System.lineSeparator());
+        sb.append(". Reach out to Nitish Goyal for any doubts/queries");
+        sb.append(System.lineSeparator());
         String formatter = "<td>%s</td>";
-        sb.append("<html><body><table cellpadding=\"4\" style=\"border:1px solid #000000;border-collapse:collapse\" border=\"1\">");
-        sb.append("<tbody> <tr><th>App</th> <th>Allocated</th> <th>Used</th> <th>Extend By</th> <th>Reduce By</th> </tr>");
+        sb.append(
+                "<html><body><table cellpadding=\"4\" style=\"border:1px solid #000000;border-collapse:collapse\" border=\"1\">");
+        sb.append(
+                "<tbody> <tr><th>App</th> <th>Allocated</th> <th>Used</th> <th>Extend By</th> <th>Reduce By</th> </tr>");
 
         for (AppOptimizationResponse appOptimizationResponse : mesosOptimizationResponse.getAppsOptimizedList()) {
             sb.append(String.format("<tr>%s", String.format(formatter, appOptimizationResponse.getApp())));

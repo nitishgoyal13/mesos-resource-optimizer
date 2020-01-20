@@ -29,7 +29,7 @@ mesosMonitorConfig:
   initialDelayInSeconds: 2
   intervalInSeconds: 86400
   extractionStrategy: MAX
-  mesosEndpoint: http://stg-appmesosm101.phonepe.nm2:8080
+  mesosEndpoint: http://prd-appmesosm101.phonepe.nm1:8080
   cpuThresholds:
     enabled: true
     minResourcePercentage: 50
@@ -45,14 +45,14 @@ mesosMonitorConfig:
 
 serviceConfigs:
   - service: tstore
-    ownerEmail: achanta.vamsi@phonepe.com, tushar.naik@phonepe.com
+    ownerEmail: nitish.goyal@phonepe.com
 
 mailConfig:
   from: noreply@phonepe.com
   host: stg-smtp001.phonepe.nm2
   port: 25
   defaultOwnersEnabled: true
-  defaultOwnersEmails: nitish.goyal@phonepe.com
+  defaultOwnersEmails: nitish.goyal@phonepe.com, server-side@phonepe.com
 
 logging:
   level: INFO
