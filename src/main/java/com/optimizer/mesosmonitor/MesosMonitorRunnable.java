@@ -61,7 +61,7 @@ public class MesosMonitorRunnable implements Runnable {
         MesosOptimizationResponse mesosOptimizationResponse = MesosOptimizationResponse.builder()
                 .appsOptimizedList(Lists.newArrayList())
                 .build();
-        List<String> apps = grafanaService.getAppList(grafanaConfig.getPrefix());
+        List<String> apps = grafanaService.getAppList();
         if (CollectionUtils.isEmpty(apps)) {
             LOGGER.error("Error in getting apps. Got empty list");
             return;
@@ -117,7 +117,7 @@ public class MesosMonitorRunnable implements Runnable {
                 sb.append(appVsOwnerMap.get(app));
             }
             log.info("Email for app {}, email : {} ", app, sb.toString());
-            if (totalRes > 0 && usedRes > 0) {
+            if (totalRes > 0 && usedRes >= 0) {
                 long usagePercentage = usedRes * 100 / totalRes;
                 if (usagePercentage < thresholdParams.getMinResourcePercentage()) {
                     reduceResourceUsage(app, totalRes, usedRes, sb.toString(), thresholdParams, resourcesOptimized,
@@ -149,12 +149,12 @@ public class MesosMonitorRunnable implements Runnable {
                     .build();
             mesosOptimizationResponse.getAppsOptimizedList()
                     .add(appOptimizationResponse);
-            mailSender.send(MAIL_SUBJECT,
+            /*mailSender.send(MAIL_SUBJECT,
                     getExtendByMailBody(app, totalRes, usedRes, extendBy, ownerEmail,
                             thresholdParams.getMinResourcePercentage(),
                             resourcesOptimized.name()
                     ), ownerEmail
-            );
+            );*/
         }
     }
 
@@ -175,9 +175,9 @@ public class MesosMonitorRunnable implements Runnable {
                     .add(appOptimizationResponse);
             LOGGER.info("App: {} Total Resource: {} Used Resource: {} Reduce: {} Email {}", app, totalRes, usedRes,
                     reduceBy, ownerEmail);
-            mailSender.send(MAIL_SUBJECT,
+            /*mailSender.send(MAIL_SUBJECT,
                     getReduceByMailBody(app, totalRes, usedRes, reduceBy, ownerEmail,
-                            thresholdParams.getMinResourcePercentage(), resourcesOptimized.name()), ownerEmail);
+                            thresholdParams.getMinResourcePercentage(), resourcesOptimized.name()), ownerEmail);*/
         }
     }
 
