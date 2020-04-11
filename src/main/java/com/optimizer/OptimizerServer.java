@@ -1,16 +1,13 @@
 package com.optimizer;
 
-import com.optimizer.config.GrafanaConfig;
 import com.optimizer.config.MailConfig;
 import com.optimizer.config.MesosMonitorConfig;
 import com.optimizer.config.OptimizerConfig;
 import com.optimizer.config.ServiceConfig;
-import com.optimizer.config.ThreadPoolConfig;
 import com.optimizer.grafana.GrafanaService;
 import com.optimizer.http.HttpClientFactory;
 import com.optimizer.mail.MailSender;
 import com.optimizer.mesosmonitor.MesosMonitorRunnable;
-import com.optimizer.threadpool.HystrixThreadPoolHostRunnable;
 import com.phonepe.rosey.dwconfig.RoseyConfigSourceProvider;
 import io.dropwizard.Application;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
@@ -48,13 +45,6 @@ public class OptimizerServer extends Application<OptimizerConfig> {
     @Override
     public void run(OptimizerConfig configuration, Environment environment) {
 
-        ThreadPoolConfig hystrixThreadPoolConfig = configuration.getThreadPoolConfig();
-        if (hystrixThreadPoolConfig == null) {
-            hystrixThreadPoolConfig = ThreadPoolConfig.builder()
-                    .build();
-            configuration.setThreadPoolConfig(hystrixThreadPoolConfig);
-        }
-
         MesosMonitorConfig mesosMonitorConfig = configuration.getMesosMonitorConfig();
         if (mesosMonitorConfig == null) {
             mesosMonitorConfig = MesosMonitorConfig.builder()
@@ -62,39 +52,32 @@ public class OptimizerServer extends Application<OptimizerConfig> {
             configuration.setMesosMonitorConfig(mesosMonitorConfig);
         }
         log.info("Mesos Montior config : " + mesosMonitorConfig);
-        GrafanaConfig grafanaConfig = configuration.getGrafanaConfig();
         MailConfig mailConfig = configuration.getMailConfig();
 
-        List<ServiceConfig> serviceConfigs = configuration.getServiceConfigs();
         MailSender mailSender = new MailSender(mailConfig);
 
-        GrafanaService grafanaService = GrafanaService.builder()
-                .grafanaConfig(grafanaConfig)
-                .client(HttpClientFactory.getHttpClient())
-                .build();
-
-        Map<String, String> serviceVsOwnerEmail = createAppVsOwnerMap(serviceConfigs);
-
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(3);
-
-        optimizeThreadPools(grafanaService, mailSender, serviceVsOwnerEmail, configuration, scheduledExecutorService);
-
-        optimizeMesosResources(configuration, mailSender, grafanaService, serviceVsOwnerEmail,
-                scheduledExecutorService);
+        optimizeMesosResources(configuration, mailSender);
 
         environment.lifecycle()
                 .manage(mailSender);
-
-
     }
 
-    private void optimizeMesosResources(OptimizerConfig optimizerConfig, MailSender mailSender,
-            GrafanaService grafanaService,
-            Map<String, String> serviceVsOwnerEmail, ScheduledExecutorService scheduledExecutorService) {
+    private void optimizeMesosResources(OptimizerConfig optimizerConfig, MailSender mailSender) {
+
+        List<ServiceConfig> serviceConfigs = optimizerConfig.getServiceConfigs();
+        Map<String, String> serviceVsOwnerEmail = createAppVsOwnerMap(serviceConfigs);
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(3);
+
         MesosMonitorConfig mesosMonitorConfig = optimizerConfig.getMesosMonitorConfig();
         if (!mesosMonitorConfig.isEnabled()) {
             return;
         }
+
+        GrafanaService grafanaService = GrafanaService.builder()
+                .grafanaConfig(optimizerConfig.getGrafanaConfig())
+                .client(HttpClientFactory.getHttpClient())
+                .build();
+
         MesosMonitorRunnable mesosMonitorRunnable = MesosMonitorRunnable.builder()
                 .grafanaService(grafanaService)
                 .mesosMonitorConfig(mesosMonitorConfig)
@@ -108,33 +91,6 @@ public class OptimizerServer extends Application<OptimizerConfig> {
                 .scheduleAtFixedRate(mesosMonitorRunnable, mesosMonitorConfig.getInitialDelayInSeconds(),
                         mesosMonitorConfig.getIntervalInSeconds(), TimeUnit.SECONDS
                 );
-    }
-
-    private void optimizeThreadPools(GrafanaService grafanaService, MailSender mailSender,
-            Map<String, String> serviceVsOwnerEmail,
-            OptimizerConfig configuration, ScheduledExecutorService scheduledExecutorService) {
-
-        if (!configuration.getThreadPoolConfig()
-                .isEnabled()) {
-            return;
-        }
-        ThreadPoolConfig threadPoolConfig = configuration.getThreadPoolConfig();
-        HystrixThreadPoolHostRunnable hystrixThreadPoolHostRunnable = HystrixThreadPoolHostRunnable.builder()
-                .grafanaService(grafanaService)
-                .threadPoolConfig(threadPoolConfig)
-                .mailSender(mailSender)
-                .serviceVsOwnerMap(serviceVsOwnerEmail)
-                .mailConfig(configuration.getMailConfig())
-                .grafanaConfig(configuration.getGrafanaConfig())
-                .clusters(configuration.getClusters())
-                .build();
-
-        scheduledExecutorService
-                .scheduleAtFixedRate(hystrixThreadPoolHostRunnable, threadPoolConfig.getInitialDelayInSeconds(),
-                        threadPoolConfig.getIntervalInSeconds(), TimeUnit.SECONDS
-                );
-
-
     }
 
     private Map<String, String> createAppVsOwnerMap(List<ServiceConfig> serviceConfigs) {

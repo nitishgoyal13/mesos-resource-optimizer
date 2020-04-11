@@ -17,7 +17,7 @@ threadPoolConfig:
   enabled : false
   thresholdMinUsagePercentage: 50
   thresholdMaxUsagePercentage: 70
-  queryDurationInHours: 192
+  queryDurationInHours: 1
   initialDelayInSeconds: 2
   intervalInSeconds: 86400
   reduceByThreshold: 50
@@ -25,7 +25,7 @@ threadPoolConfig:
 
 mesosMonitorConfig:
   enabled : true
-  queryDurationInHours: 192
+  queryDurationInHours: 11
   initialDelayInSeconds: 2
   intervalInSeconds: 86400
   extractionStrategy: MAX
@@ -34,8 +34,11 @@ mesosMonitorConfig:
     enabled: true
     minResourcePercentage: 50
     maxResourcePercentage: 70
-    reduceThreshold: 5
-    extendThreshold: 5
+    reduceThreshold: 4
+    extendThreshold: 4
+    maxResourcesAllocatedPercentage: 160
+    extendThresholdPercentage: 120
+    defaultResources: 2
   memoryThresholds:
     enabled: false
     minResourcePercentage: 50

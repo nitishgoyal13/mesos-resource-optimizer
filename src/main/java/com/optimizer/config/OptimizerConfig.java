@@ -17,18 +17,12 @@ import lombok.EqualsAndHashCode;
 @Builder
 public class OptimizerConfig extends Configuration {
 
-    private RiemannConfig riemann;
-
     private List<ServiceConfig> serviceConfigs;
 
     private GrafanaConfig grafanaConfig;
 
-    private ThreadPoolConfig threadPoolConfig;
-
     private MailConfig mailConfig;
 
     private MesosMonitorConfig mesosMonitorConfig;
-
-    private List<String> clusters;
 
 }

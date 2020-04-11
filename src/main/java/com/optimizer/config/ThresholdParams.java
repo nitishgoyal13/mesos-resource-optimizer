@@ -16,6 +16,9 @@ public class ThresholdParams {
 
     private int minResourcePercentage = 50;
     private int maxResourcePercentage = 70;
-    private int reduceThreshold = 50;
-    private int extendThreshold = 50;
+    private int reduceThreshold = 4;
+    private int extendThreshold = 4;
+    private int maxResourcesAllocatedPercentage = 160;
+    private int extendThresholdPercentage = 120;
+    private int defaultResources = 2;
 }

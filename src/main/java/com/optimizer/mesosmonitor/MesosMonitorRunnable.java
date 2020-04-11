@@ -6,7 +6,6 @@ import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.TOTAL_MEMORY;
 import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.USED_CPU;
 import static com.optimizer.mesosmonitor.MesosMonitorQueryUtils.USED_MEMORY;
 import static com.optimizer.util.OptimizerUtils.ExtractionStrategy;
-import static com.optimizer.util.OptimizerUtils.MAIL_SUBJECT;
 
 import com.collections.CollectionUtils;
 import com.google.common.collect.Lists;
@@ -67,6 +66,9 @@ public class MesosMonitorRunnable implements Runnable {
             return;
         }
         handleMesosResources(apps, mesosOptimizationResponse);
+        mesosOptimizationResponse.getAppsOptimizedList().sort((o1, o2) -> {
+            return o2.getReduceBy() > o1.getReduceBy() ? 1 : -1;
+        });
         mailSender.send("Optimize Mesos Resources", getMailBody(mesosOptimizationResponse),
                 mailConfig.getDefaultOwnersEmails());
     }
@@ -136,7 +138,7 @@ public class MesosMonitorRunnable implements Runnable {
             ThresholdParams thresholdParams,
             ResourcesOptimized resourcesOptimized, MesosOptimizationResponse mesosOptimizationResponse) {
 
-        long extendBy = usedRes - ((totalRes * thresholdParams.getMinResourcePercentage()) / 100);
+        long extendBy = (totalRes * thresholdParams.getExtendThresholdPercentage() / 100) - usedRes;
         if (extendBy > thresholdParams.getExtendThreshold()) {
             LOGGER.info("App: {} Total Resource: {} Used Resource: {} Extend: {} Email : {}", app, totalRes, usedRes,
                     extendBy, ownerEmail);
@@ -162,8 +164,11 @@ public class MesosMonitorRunnable implements Runnable {
             ThresholdParams thresholdParams,
             ResourcesOptimized resourcesOptimized, MesosOptimizationResponse mesosOptimizationResponse) {
 
-        long reduceBy = ((totalRes * thresholdParams.getMinResourcePercentage()) / 100) - usedRes;
-        if (reduceBy > thresholdParams.getReduceThreshold()) {
+        long reduceBy = totalRes  - usedRes * thresholdParams.getMaxResourcesAllocatedPercentage() / 100;
+        if (usedRes == 0){
+            reduceBy = totalRes - thresholdParams.getDefaultResources();
+        }
+        if (reduceBy > thresholdParams.getReduceThreshold() || usedRes == 0) {
             AppOptimizationResponse appOptimizationResponse = AppOptimizationResponse.builder()
                     .app(app)
                     .reduceBy(reduceBy)
@@ -233,8 +238,10 @@ public class MesosMonitorRunnable implements Runnable {
     private String getMailBody(MesosOptimizationResponse mesosOptimizationResponse) {
         StringBuilder sb = new StringBuilder();
         String formatter = "<td>%s</td>";
-        sb.append("<html><body><table cellpadding=\"4\" style=\"border:1px solid #000000;border-collapse:collapse\" border=\"1\">");
-        sb.append("<tbody> <tr><th>App</th> <th>Allocated</th> <th>Used</th> <th>Extend By</th> <th>Reduce By</th> </tr>");
+        sb.append(
+                "<html><body><table cellpadding=\"4\" style=\"border:1px solid #000000;border-collapse:collapse\" border=\"1\">");
+        sb.append(
+                "<tbody> <tr><th>App</th> <th>Allocated</th> <th>Used</th> <th>Extend By</th> <th>Reduce By</th> </tr>");
 
         for (AppOptimizationResponse appOptimizationResponse : mesosOptimizationResponse.getAppsOptimizedList()) {
             sb.append(String.format("<tr>%s", String.format(formatter, appOptimizationResponse.getApp())));
