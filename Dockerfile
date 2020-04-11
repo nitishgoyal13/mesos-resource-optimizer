@@ -1,4 +1,5 @@
-FROM docker.phonepe.com:5000/pp-ops-xenial:0.6
+FROM ubuntu:14.04
+MAINTAINER Nitish Goyal <nitishgoyal13 [at] gmail.com>
 
 EXPOSE 17000
 EXPOSE 17001
@@ -11,5 +12,5 @@ ENV JAR_FILE optimizer.jar
 
 ADD target/optimizer*.jar ${JAR_FILE}
 
-CMD sh -exc "java -jar -Duser.timezone=IST ${JAVA_OPTS} -Xms${JAVA_PROCESS_MIN_HEAP-512m} -Xmx${JAVA_PROCESS_MAX_HEAP-512m} ${JAR_FILE} server /rosey/config.yml"
+CMD sh -exc "java -jar -Duser.timezone=IST ${JAVA_OPTS} -Xms${JAVA_PROCESS_MIN_HEAP-512m} -Xmx${JAVA_PROCESS_MAX_HEAP-512m} ${JAR_FILE} server config/local.yml"
 

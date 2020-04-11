@@ -238,8 +238,7 @@ public class MesosMonitorRunnable implements Runnable {
     private String getMailBody(MesosOptimizationResponse mesosOptimizationResponse) {
         StringBuilder sb = new StringBuilder();
         sb.append("Below analysis is based on last 8 days usage. "
-                + "Refer to this graph for tracking your app usage : "
-                + "http://prd-grafana001.phonepe.nm1/dashboard/db/mesos-monitor");
+                + "Refer to this graph for tracking your app usage");
         sb.append(System.lineSeparator());
         sb.append(". Reach out to Nitish Goyal for any doubts/queries");
         sb.append(System.lineSeparator());

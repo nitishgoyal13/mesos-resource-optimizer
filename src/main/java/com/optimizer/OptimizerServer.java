@@ -8,7 +8,6 @@ import com.optimizer.grafana.GrafanaService;
 import com.optimizer.http.HttpClientFactory;
 import com.optimizer.mail.MailSender;
 import com.optimizer.mesosmonitor.MesosMonitorRunnable;
-import com.phonepe.rosey.dwconfig.RoseyConfigSourceProvider;
 import io.dropwizard.Application;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
@@ -34,10 +33,6 @@ public class OptimizerServer extends Application<OptimizerConfig> {
         if (localConfig) {
             bootstrap.setConfigurationSourceProvider(
                     new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
-                            new EnvironmentVariableSubstitutor()));
-        } else {
-            bootstrap.setConfigurationSourceProvider(
-                    new SubstitutingSourceProvider(new RoseyConfigSourceProvider("dataplatform", "optimizer"),
                             new EnvironmentVariableSubstitutor()));
         }
     }
