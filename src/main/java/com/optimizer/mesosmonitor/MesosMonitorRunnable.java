@@ -237,6 +237,12 @@ public class MesosMonitorRunnable implements Runnable {
 
     private String getMailBody(MesosOptimizationResponse mesosOptimizationResponse) {
         StringBuilder sb = new StringBuilder();
+        sb.append("Below analysis is based on last 8 days usage. "
+                + "Refer to this graph for tracking your app usage : "
+                + "http://prd-grafana001.phonepe.nm1/dashboard/db/mesos-monitor");
+        sb.append(System.lineSeparator());
+        sb.append(". Reach out to Nitish Goyal for any doubts/queries");
+        sb.append(System.lineSeparator());
         String formatter = "<td>%s</td>";
         sb.append(
                 "<html><body><table cellpadding=\"4\" style=\"border:1px solid #000000;border-collapse:collapse\" border=\"1\">");
